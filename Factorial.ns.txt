@@ -1,0 +1,227 @@
+-- Factorials in Tanager --
+-- K.D.P.Ross            --
+
+PRAGMA Library Factorial
+PRAGMA Setting SyntaxRecursiveDefs
+set SyntaxRecursiveDefs
+
+-- Newbie programmer
+
+factorialNewb x =
+  if x == 0
+     then 1
+     else x * factorialNewb (x - 1)
+
+
+
+-- Newbie Yoda programmer
+
+factorialYoda x =
+  if 0 == x
+     then 1
+     else x * factorialYoda (x - 1)
+
+
+
+-- Imperative programmer
+
+factorialRef x =
+  let strict res = ref 1
+           | i   = ref 1
+  let loop       = if !! i <= x
+                      then res := !! res * !! i ;
+                           i   := !! i + 1 ;
+                           loop
+                      else !! res
+  loop
+
+
+
+-- Newbie who's just discovered type annotations
+
+factorialTyped : Num -> Num
+ ... = \ (n : Num) ->
+         (if (n : Num) `(== : Num -> Num -> Bool)` (0 : Num)
+             then (1 : Num)
+             else ((n : Num) `(* : Num -> Num -> Num)` (factorialTyped : Num -> Num) ((n : Num) `(- : Num -> Num -> Num)` (1 : Num) : Num) : Num)
+          : Num)
+
+
+
+-- Idiomatic Tanager programmer
+
+factorialTanager : Num -> Num
+ ... = fun f (acc -> 1) {} where
+       | 0 -> acc
+       | n -> f (n * acc) (n - 1)
+
+
+
+-- ML'er / bad Haskeller
+
+factorialCase : Num -> Num
+ ... n =
+   case n of
+   | 0 -> 1
+   | _ -> n * factorialCase (n - 1)
+
+
+
+-- Lisper / Schemer / Racketeer ... Sooooo many
+-- brackets! ;~P
+
+factorialBrackets =
+  let strict cond = =>_;
+  (fun (n) ->
+    (cond (== n 0)
+      1
+      (* n (factorialBrackets (- n 1)))))
+
+
+
+-- Monadic programmer
+
+topLevel|defLevel 25 Left
+topLevel|defMixfix 25 "_ >>= _"
+
+module idMonad where
+  return : a -> a
+  ...    = id
+
+  >>= : a -> (a -> b) -> b
+  ... = flip apply
+
+factorialMonad =
+  (fun
+   | 0 -> return 1
+   | n -> factorialMonad (n - 1) >>= (| \ r ->
+          return (n * r) |)
+  ) with idMonad
+
+
+
+-- CPS'ed programmer
+
+factorialCPS =
+  fun f {} (k -> id) where
+  | 0 -> k 1
+  | n -> f (n - 1) ((_ * n) >> k)
+
+
+
+-- Pointless programmer
+
+factorialPointless =
+  (_ == 0) => const 1 ;^ ,2 >> ,(_, (_ - 1) >> factorialPointless) >> uncurry2 (_ * _)
+
+
+
+-- More-clever, more-pointless programmer; I rather like
+-- this, actually ... Just need a good deforester /
+-- supercompiler!
+
+factorialRange =
+  max 1 >> range 1 >> foldl (_ * _) 1
+
+
+
+-- Oh, hell, I might as well do Peano Arithmetic, also ;~P
+
+new type Nat : *
+new cons Z   : Nat
+new cons S   : Nat -> Nat
+
+module peano exports factorial where
+  inject : Num -> Nat
+  ... = fun
+        | 0 -> Z
+        |   -> (_ - 1) >> inject >> S
+
+  project : Nat -> Num
+  ... = fun
+        | S n -> 1 + project n
+        | Z   -> 0
+
+  plus : Nat -> Nat -> Nat
+  ... = fun loop {} n where
+        | S m' -> m' `plus` S n
+        | Z    ->  n
+
+  mult : Nat -> Nat -> Nat
+  ... = fun loop m -> {} where
+        | S n -> m `plus` loop n
+        | Z   -> Z
+
+  factorialInternal : Nat -> Nat
+  ... = fun
+        | S n' as n -> n `mult` factorialInternal n'
+        | Z         -> S Z
+
+  factorial = inject >> factorialInternal >> project
+
+factorialPeano = peano.factorial
+
+
+
+-- Quickchecker / SDET / QA / Tester
+module test exports testLoop, runTests, numTests where
+  factorials : [ Num -> Num ]
+  ... = map runPrint facs
+          where factorialPeanoHack n = if n < 7
+                                          then factorialPeano n
+                                          else fac n
+                                       -- `factorialPeano` is too slow!
+              | align                = map pad
+                                         where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
+                                             | n     = facs' |> map (fst >> stringLength) >> foldl1 max
+                                       -- Let's make things pretty 0:~P
+              | facs                 = facs' |> unzip >> first align >> uncurry2 zip
+              | facs'                = [ ("<prelude-fac>", fac),
+                                         ("factorialNewb", factorialNewb),
+                                         ("factorialYoda", factorialYoda),
+                                         ("factorialRef", factorialRef),
+                                         ("factorialTyped", factorialTyped),
+                                         ("factorialTanager", factorialTanager),
+                                         ("factorialCase", factorialCase),
+                                         ("factorialBrackets", factorialBrackets),
+                                         ("factorialMonad", factorialMonad),
+                                         ("factorialCPS", factorialCPS),
+                                         ("factorialPointless", factorialPointless),
+                                         ("factorialRange", factorialRange),
+                                         ("factorialPeano", factorialPeanoHack)
+                                       ]
+                                       -- Check our definitions against the Prelude's.
+
+  runPrint : (String, Num -> Num) -> Num -> Num
+  ... (l, f) n = let strict res = f n
+                 printEndline ("  " # l # " " # showProperFraction n # " => " # showProperFraction res) ;
+                 res
+
+  agree : Num -> Bool
+  ... = (alphaMap _ factorials) >> agreement
+          where agreement (x :: xs) = forall (_ == x) xs
+
+  testLoop : Num -> Bool
+  ... n = let strict testOne i =
+            i |> showProperFraction >> ("Testing " # _) >> printEndline ;
+            if i |> agree >> not
+               then printEndline "FAILED!!!!!" ;
+                    False
+               else True
+          (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
+          -- Test 0 .. 7 (nice, small numbers) ... and some random
+          -- values ... and a *big* value.
+
+  runTests : () -> ()
+  ... _ = case time (\ _ -> !! numTests |> testLoop) of
+          | (True, t) -> printEndline ("All tests passed ... in " # showDecimal t # " seconds.")
+          | (_,    t) -> printEndline ("Failure ... in " # showDecimal t # " seconds.")
+
+  numTests : Ref Num
+  ... = ref 25
+
+  maxI : Num
+  ... = 500
+
+main : () -> ()
+ ... _ = test.runTests ()
