@@ -57,6 +57,16 @@ factorialTanager : Num -> Num
 
 
 
+-- Ultrasafe clever Tanagerer
+
+factorialSafe : Num -> Num
+ ... = fun f (acc -> 1) {} where
+       | ~ as n when n < 0
+       | 0                 -> acc
+       |                   -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+
+
+
 -- ML'er / bad Haskeller
 
 factorialCase : Num -> Num
@@ -182,6 +192,7 @@ module test exports testLoop, runTests, numTests where
                                          ("factorialRef", factorialRef),
                                          ("factorialTyped", factorialTyped),
                                          ("factorialTanager", factorialTanager),
+                                         ("factorialSafe", factorialSafe),
                                          ("factorialCase", factorialCase),
                                          ("factorialBrackets", factorialBrackets),
                                          ("factorialMonad", factorialMonad),
@@ -224,4 +235,4 @@ module test exports testLoop, runTests, numTests where
   ... = 500
 
 main : () -> ()
- ... _ = test.runTests ()
+ ... = test.runTests
