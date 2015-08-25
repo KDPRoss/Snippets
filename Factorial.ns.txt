@@ -40,40 +40,40 @@ factorialRef x =
 -- Newbie who's just discovered type annotations
 
 factorialTyped : Num -> Num
- ... = \ (n : Num) ->
-         (if (n : Num) `(== : Num -> Num -> Bool)` (0 : Num)
-             then (1 : Num)
-             else ((n : Num) `(* : Num -> Num -> Num)` (factorialTyped : Num -> Num) ((n : Num) `(- : Num -> Num -> Num)` (1 : Num) : Num) : Num)
-          : Num)
+... = \ (n : Num) ->
+        (if (n : Num) `(== : Num -> Num -> Bool)` (0 : Num)
+            then (1 : Num)
+            else ((n : Num) `(* : Num -> Num -> Num)` (factorialTyped : Num -> Num) ((n : Num) `(- : Num -> Num -> Num)` (1 : Num) : Num) : Num)
+         : Num)
 
 
 
 -- Idiomatic Tanager programmer
 
 factorialTanager : Num -> Num
- ... = fun f (acc -> 1) {} where
-       | 0 -> acc
-       | n -> f (n * acc) (n - 1)
+... = fun f (acc -> 1) {} where
+      | 0 -> acc
+      | n -> f (n * acc) (n - 1)
 
 
 
 -- Ultrasafe clever Tanagerer
 
 factorialSafe : Num -> Num
- ... = fun f (acc -> 1) {} where
-       | ~ n when n < 0
-       | 0              -> acc
-       |                -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+... = fun f (acc -> 1) {} where
+      | ~ n when n < 0
+      | 0              -> acc
+      |                -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
 
 
 
 -- ML'er / bad Haskeller
 
 factorialCase : Num -> Num
- ... n =
-   case n of
-   | 0 -> 1
-   | _ -> n * factorialCase (n - 1)
+... n =
+  case n of
+  | 0 -> 1
+  | _ -> n * factorialCase (n - 1)
 
 
 
@@ -235,4 +235,4 @@ module test exports testLoop, runTests, numTests where
   ... = 500
 
 main : () -> ()
- ... = test.runTests
+... = test.runTests
