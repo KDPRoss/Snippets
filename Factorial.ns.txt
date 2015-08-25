@@ -61,9 +61,9 @@ factorialTanager : Num -> Num
 
 factorialSafe : Num -> Num
  ... = fun f (acc -> 1) {} where
-       | ~ as n when n < 0
-       | 0                 -> acc
-       |                   -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+       | ~ n when n < 0
+       | 0              -> acc
+       |                -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
 
 
 
