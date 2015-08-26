@@ -1,6 +1,9 @@
 -- FizzBuzz in Tanager --
 -- K.D.P.Ross          --
 
+PRAGMA Library FizzBuzz
+PRAGMA Light
+
 fizzBuzz : Num -> ()
 ... = fun
       | ~ n when n < 1
@@ -11,6 +14,6 @@ fizzBuzz : Num -> ()
                                        | div3          -> "Fizz"
                                        | div5          -> "Buzz"
                                        | _             -> show n
-                              | div3 = n `divisibleBy` 3
-                              | div5 = n `divisibleBy` 5
-            | divisibleBy n m = 0 == n mod m
+                                div3 = n `divisibleBy` 3
+                                div5 = n `divisibleBy` 5
+              divisibleBy n m = 0 == n mod m

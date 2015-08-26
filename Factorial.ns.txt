@@ -2,8 +2,7 @@
 -- K.D.P.Ross            --
 
 PRAGMA Library Factorial
-PRAGMA Setting SyntaxRecursiveDefs
-set SyntaxRecursiveDefs
+PRAGMA Light
 
 -- Newbie programmer
 
@@ -27,7 +26,7 @@ factorialYoda x =
 
 factorialRef x =
   let strict res = ref 1
-           | i   = ref 1
+             i   = ref 1
   let loop       = if !! i <= x
                       then res := !! res * !! i ;
                            i   := !! i + 1 ;
@@ -64,6 +63,13 @@ factorialSafe : Num -> Num
       | ~ n when n < 0
       | 0              -> acc
       |                -> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+
+
+
+-- Haskeller / Mirandaer / Hoper
+factorialClause : Num -> Num
+... 0 = 1
+... n = n * factorialClause (n - 1)
 
 
 
@@ -148,19 +154,16 @@ module peano exports factorial where
         |   -> (_ - 1) >> inject >> S
 
   project : Nat -> Num
-  ... = fun
-        | S n -> 1 + project n
-        | Z   -> 0
+  ... (S n) = 1 + project n
+  ... Z     = 0
 
   plus : Nat -> Nat -> Nat
-  ... = fun loop {} n where
-        | S m' -> m' `plus` S n
-        | Z    ->  n
+  ... (S m') n = m' `plus` S n
+  ... Z      n = n
 
   mult : Nat -> Nat -> Nat
-  ... = fun loop m -> {} where
-        | S n -> m `plus` loop n
-        | Z   -> Z
+  ... m (S n) = m `plus` (m `mult` n)
+  ... _ Z     = Z
 
   factorialInternal : Nat -> Nat
   ... = fun
@@ -181,18 +184,19 @@ module test exports testLoop, runTests, numTests where
                                           then factorialPeano n
                                           else fac n
                                        -- `factorialPeano` is too slow!
-              | align                = map pad
+                align                = map pad
                                          where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
-                                             | n     = facs' |> map (fst >> stringLength) >> foldl1 max
+                                               n     = facs' |> map (fst >> stringLength) >> foldl1 max
                                        -- Let's make things pretty 0:~P
-              | facs                 = facs' |> unzip >> first align >> uncurry2 zip
-              | facs'                = [ ("<prelude-fac>", fac),
+                facs                 = facs' |> unzip >> first align >> uncurry2 zip
+                facs'                = [ ("<prelude-fac>", fac),
                                          ("factorialNewb", factorialNewb),
                                          ("factorialYoda", factorialYoda),
                                          ("factorialRef", factorialRef),
                                          ("factorialTyped", factorialTyped),
                                          ("factorialTanager", factorialTanager),
                                          ("factorialSafe", factorialSafe),
+                                         ("factorialClause", factorialClause),
                                          ("factorialCase", factorialCase),
                                          ("factorialBrackets", factorialBrackets),
                                          ("factorialMonad", factorialMonad),
@@ -213,12 +217,11 @@ module test exports testLoop, runTests, numTests where
           where agreement (x :: xs) = forall (_ == x) xs
 
   testLoop : Num -> Bool
-  ... n = let strict testOne i =
-            i |> showProperFraction >> ("Testing " # _) >> printEndline ;
-            if i |> agree >> not
-               then printEndline "FAILED!!!!!" ;
-                    False
-               else True
+  ... n = let strict testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline ;
+                                 if i |> agree >> not
+                                    then printEndline "FAILED!!!!!" ;
+                                         False
+                                    else True
           (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
           -- Test 0 .. 7 (nice, small numbers) ... and some random
           -- values ... and a *big* value.
