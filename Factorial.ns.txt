@@ -108,11 +108,21 @@ module idMonad where
   ... = flip apply
 
 factorialMonad =
-  (fun
-   | 0 -> return 1
-   | n -> factorialMonad (n - 1) >>= (| \ r ->
-          return (n * r) |)
-  ) with idMonad
+  using idMonad
+  fun
+  | 0 -> return 1
+  | n -> factorialMonad (n - 1) >>= (| \ r ->
+         return (n * r) |)
+
+
+
+-- Haskelly monadic programmer
+
+factorialDo
+... 0 = return 1 with idMonad
+... n = using idMonad
+        do >>= r = factorialDo (n - 1)
+               return (n * r)
 
 
 
