@@ -4,8 +4,6 @@ PRAGMA Light
 -- stacks; based on an exercise from the Simon-Peyton-Jones
 -- compilers book.
 
--- This will require that the `DDParse` library be available
--- on the library path.
 topLevel|loadFile "DDParse.ns.txt"
 
 -- ========== Source Language ========== --
