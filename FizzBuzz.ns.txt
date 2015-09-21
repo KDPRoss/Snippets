@@ -1,19 +1,19 @@
+PRAGMA Light
+PRAGMA Library FizzBuzz
+
 -- FizzBuzz in Tanager --
 -- K.D.P.Ross          --
-
-PRAGMA Library FizzBuzz
-PRAGMA Light
 
 fizzBuzz : Num -> ()
 ... = fun
       | ~ n when n < 1
       | -> range 1 >> iter doOne
-        where doOne n = printEndline l
-                          where l    = cases
-                                       | div3 and div5 -> "FizzBuzz"
-                                       | div3          -> "Fizz"
-                                       | div5          -> "Buzz"
-                                       | _             -> show n
-                                div3 = n `divisibleBy` 3
-                                div5 = n `divisibleBy` 5
-              divisibleBy n m = 0 == n mod m
+           where doOne n         = printEndline l
+                                   where l    = cases
+                                                | div3 and div5 -> "FizzBuzz"
+                                                | div3          -> "Fizz"
+                                                | div5          -> "Buzz"
+                                                | _             -> show n
+                                         div3 = n `divisibleBy` 3
+                                         div5 = n `divisibleBy` 5
+                 divisibleBy n m = 0 == n mod m
