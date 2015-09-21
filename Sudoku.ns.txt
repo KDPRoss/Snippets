@@ -1,0 +1,606 @@
+PRAGMA Light
+
+-- Sudoku Solver in Tanager.                         --
+--                                                   --
+-- Copyright 2015 K.D.P.Ross <KDPRoss@gmail.com>     --
+--                                                   --
+-- This code is licensed only for study and personal --
+-- enrichment.                                       --
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
+
+-- We're going to assume a standard 9x9 Sudoku. Would
+-- be possible to abstract the alphabet, the size of the
+-- square, and the constraints. Let's leave that for another
+-- time. This implementation could be made significantly
+-- more efficient (for instance, by keeping a list of
+-- positions that require further relaxation), but I'm
+-- faithfully representing the algorithm that I did by hand
+-- the single time that I tried one of these puzzles (after
+-- which I concluded that machines were better suited to
+-- this sort of tedium).
+
+
+-- ========== Coördinates ========== --
+
+new type Position : *
+new cons Position : Num -> Num -> Position
+
+showPosition : Position -> String
+... (Position x y) = show (x, y)
+
+-- Following Tanager convention, we'll address rows /
+-- columns by `1 .. 9` (rather than using `0`-based
+-- indexing); this is arbitrary.
+nums : [ Num ]
+... = range 1 9
+
+allPos : [ Position ]
+... = nums |> map (Position >> (map _ nums)) >> concat
+
+
+
+-- ========== Values in the Square ========== --
+
+-- For convenience, we'll separate the known / unknown
+-- cases; we could, of course, simply use lists and check
+-- for single-element lists. We'll maintain the invariant
+-- that `Choice [ _ ]` is never constructed.
+
+new type Value  : *
+new cons Known  : Num -> Value
+new cons Choice : [ Num ] -> Value
+
+-- These will be convenient for the common (fixed /
+-- completely-unknown) cases.
+?? : Value
+... = Choice nums
+
+k : Num -> Value
+... = Known
+
+showNum : Num -> String
+... = showProperFraction
+
+showValue : Value -> String
+... (Known n)   = [ n ] |> Choice >> showValue
+... (Choice ns) = nums |> map showOne >> implode >> around "[ " " ]"
+                  where showOne n = if n `elem` ns
+                                       then showNum n
+                                       else " "
+
+
+
+-- ========== The Whole Square ========== --
+
+-- Let's abstract all of the operations so that we retain
+-- the flexibility to later change representations. We'll
+-- use Tanager's (purely-functional) `Map`s to efficiently
+-- represent the square.
+
+new type Square : *
+new cons Square : Map Position Value -> Square
+
+-- Because of our definition of `getVal`, wrapping an empty
+-- `Map` will work.
+defaultSquare : Square
+... = Square <>
+
+getVal : Square -> Position -> Value
+... (Square f) p = case f >+> p of
+                   | Just v  -> v
+                   | Nothing -> Choice nums
+
+setVal : Square -> Position -> Value -> Square
+... (Square f) p v = Square $$ f <+> p |-> v
+
+getRow : Square -> Num -> [ Value ]
+... sq r = map (Position r >> getVal sq) nums
+
+getCol : Square -> Num -> [ Value ]
+... sq c = map ((Position _ c) >> getVal sq) nums
+
+getRowFor : Position -> Square -> [ Value ]
+... (Position r c) sq = nums |> filter (_ =/= c) >> map (Position r >> getVal sq)
+
+getColFor : Position -> Square -> [ Value ]
+... (Position r c) sq = nums |> filter (_ =/= r) >> map ((Position _ c) >> getVal sq)
+
+-- We'll need to be able to get the 9 squares for the 3x3
+-- subsquare to which some position belongs; sometimes, we
+-- want to include that position, but not always.
+getThreeByThreeForGen : Bool -> Position -> Square -> [ Value ]
+... include (Position r c) sq = concatMap getVal' ps
+                                where ps                   = concat $$ map ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
+                                      offsets              = range 0 2
+                                      r'                   = r - (r - 1) mod 3
+                                      c'                   = c - (c - 1) mod 3
+                                      getVal' = fun
+                                                | Position `r `c when not include -> []
+                                                | p                               ->  [ getVal sq p ]
+
+getThreeByThreeFor : Position -> Square -> [ Value ]
+... = getThreeByThreeForGen True
+
+getThreeByThreeForExcept : Position -> Square -> [ Value ]
+... = getThreeByThreeForGen False
+
+showSquare : Square -> String
+... sq = nums |> map showRow >> intersperse newline >> implode
+         where showRow r = nums |> map (Position r >> getVal sq >> showValue) >> intersperse " " >> implode
+
+-- A bit more compact.
+showSolution : Square -> String
+... sq = nums |> map showRow >> intersperse newline >> implode
+         where showRow r = nums |> map (Position r >> getVal sq >> showValue) >> implode
+               showValue
+               ... (Known x) = showNum x
+               ... _         = " "
+
+
+-- ========== Validator ========== --
+
+-- Let's break validation into two phases: There's no
+-- sense in checking partial solutions.
+
+-- Are there no unknown values?
+concrete? : Square -> Bool
+... sq = allPos |> map (getVal sq) >> forall isKnown
+         where isKnown
+               ... (Known _) = True
+               ... _         = False
+
+-- Given that `concrete? sq`, do the all-known values form
+-- a valid Sudoku solution? (N.B., we *are* assuming that
+-- the solution is a solution to *the original problem*! If
+-- we were being a bit more rigorous, we'd check that the
+-- original problem 'abstracts' the solution, in the obvious
+-- way.)
+solution? : Square -> Bool
+... sq = checkRows and checkCols and checkSubs
+         where checkRows         = checkGen getRow
+               checkCols         = checkGen getCol
+               checkSubs         = subs |> map ((getThreeByThreeFor _ sq) >> map extract) >> good
+               subs              = concatMap (\ r -> map (Position r) nums') nums'
+                                   where nums' = [ 1, 4, 7 ]
+               checkGen f        = nums |> map (f sq >> map extract) >> good
+               good              = forall (sort >> (_ == nums))
+               extract (Known n) = n
+
+-- Just for completeness:
+correctSolution? : Square -> Bool
+... = concrete? and^ solution?
+
+-- We'll 'measure' the uncertainty of a square by the total
+-- number of possibilities that a brute-force solution would
+-- have to consider -- the product of the numbers of unknown
+-- values.
+uncertainty : Square -> Num
+... sq = allPos |> map (getVal sq) >> map one >> product
+         where one
+               ... (Choice ns) = length ns
+               ... _           = 1
+
+
+
+-- ========== Standard Failure Monad ========== --
+
+-- To make this code self-contained, we'll reïmplement
+-- the `Maybe` monad; we could, of course, just import the
+-- relevant module from the `Monads` library.
+
+returnMaybe : a -> Maybe a
+... = Just
+
+bindMaybe : Maybe a -> (a -> Maybe b) -> Maybe b
+... (Just x) f = f x
+... Nothing  _ = Nothing
+
+failMaybe : Maybe a
+... = Nothing
+
+mapM : (a -> Maybe b) -> [ a ] -> Maybe [ b ]
+... = fun loop f -> {} where
+      | []      -> returnMaybe []
+      | x :: xs -> do bindMaybe x'  = f x
+                                xs' = loop xs
+                                returnMaybe <| x' :: xs'
+
+
+
+-- ========== Debugging / Verbosity ========== --
+
+verbose : Bool
+... = False
+
+
+
+-- ========== Relaxation Steps ========== --
+
+knowns : [ Value ] -> [ Num ]
+... = map get >> concat
+      where get
+            ... (Known x) = [ x ]
+            ... _         = []
+
+unknowns : [ Value ] -> [ Num ]
+... = concatMap get >> nub
+      where get
+            ... (Choice xs) = xs
+            ... _           = []
+
+-- Remove values that are 'taken' by another position in the
+-- relevant row, column, 3x3 subsquare. ('Negative' because
+-- we're reasoning about what the value *mustn't* be.)
+relaxNeg : Square -> Position -> Maybe Value
+... sq p = let lazy   usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |> alphaMap p >> alphaMap sq >> concat >> knowns
+           let strict v            = getVal sq p
+                      printEndline = if verbose
+                                        then printEndline
+                                        else ignore
+           case v of
+           | Choice ns -> let lazy header = printEndline <| "relax-(" # showPosition p # "->" # showValue v # ") with usedUp = " # showValue (Choice usedUp)
+                          case filter ((_ `elem` usedUp) >> not) ns of
+                          | []           -> header ;
+                                            printEndline <| "Failed to relax- " # showPosition p # " -> " # showValue v # "." ;
+                                            failMaybe
+                          | [ n ]        -> header ;
+                                            printEndline <| " => <" # showNum n # ">" ;
+                                            n |> Known >> returnMaybe
+                          | Choice \ res -> (if v =/= res
+                                                then header ;
+                                                     printEndline <| " => " # showValue res
+                                            ) ;
+                                            returnMaybe res
+           |           -> returnMaybe
+
+-- If no other position in the relevant row, column, or 3x3
+-- subsquare can take a value, then this one must take it.
+-- ('Positive' because we're reasoning about what the value
+-- *must* be.) Here, we must consider each substructure
+-- separately.
+relaxPos : Square -> Position -> Maybe Value
+... sq p = (case v of
+            | Choice ns -> do bindMaybe ns1 = relaxRow ns
+                                        ns2 = relaxCol ns1
+                                        ns3 = relaxSq  ns2
+                                        case ns3 of
+                                        | [ n ] -> n |> Known >> returnMaybe
+                                        | _     -> returnMaybe v
+            |           -> returnMaybe
+           )
+           where relaxRow           = relaxGen getRowFor
+                 relaxCol           = relaxGen getColFor
+                 relaxSq            = relaxGen getThreeByThreeForExcept
+                 relaxGen
+                 ... _ ([ _ ] as n) = returnMaybe n
+                 ... f ns           = (case filter ((_ `elem` used) >> not) ns of
+                                       | [ n ] as ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used) ;
+                                                         printEndline <| " => <" # showNum n # ">" ;
+                                                         returnMaybe ns'
+                                       |              -> returnMaybe
+                                      )
+                                      where vs   = f p sq
+                                            used = unknowns vs ++ knowns vs |> nub
+                 v                  = getVal sq p
+                 printEndline       = if verbose
+                                         then printEndline
+                                         else ignore
+
+-- There are all sorts of optimisations that we could
+-- consider: Among them, for instance, *not* setting a
+-- position to the value that it already has! Efficiency,
+-- however, isn't the point of this implementation ;~}
+relaxIter : Square -> Maybe Square
+... sq = do bindMaybe rs  = relaxPass relaxNeg sq
+                      sq' = update sq rs
+                      rs' = relaxPass relaxPos sq'
+                      update sq' rs'
+         where relax f sq p   = case getVal sq p of
+                                | Known _ as v -> returnMaybe (p, v)
+                                | _            -> do bindMaybe v' = f sq p
+                                                               returnMaybe (p, v')
+               relaxPass f sq = mapM (relax f sq) allPos
+               update sq      = foldl (setVal >> uncurry2) sq >> returnMaybe
+
+-- Perform relaxations iteratively until a fixed point is
+-- reached. (Since we're printing our 'uncertainty' metric
+-- anyhow, might well return early if this is `0`.)
+relax : Square -> Maybe Square
+... sq = let strict unc = uncertainty sq
+         if 0 == unc
+            then returnMaybe sq
+            else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..." ;
+                 (do bindMaybe sq' = relaxIter sq
+                               printEndline <| "After relaxation:" ;
+                               sq' |> showSquare >> printEndline ;
+                               if sq' == sq
+                                  then printEndline "Done relaxing." ;
+                                       returnMaybe sq
+                                  else relax sq'
+                 )
+
+-- Assuming that we're stuck, choose some position that has
+-- a minimal number of possibilities. (We don't really need
+-- to do the full sort, of course.)
+findChoice : Square -> Maybe (Position, [ Num ])
+... sq = (case allPos |> map get >> concat >> sortByLength of
+          | c :: _ -> returnMaybe c
+          | []     -> failMaybe
+         )
+         where get p           = case getVal sq p of
+                                 | Known _   -> []
+                                 | Choice ns -> [ (p, ns) ]
+               sortByLength    = sortBy lengthSnd
+               lengthSnd t1 t2 = fetch t1 < fetch t2
+                                 where fetch = 2of2 >> length
+
+-- Solve by:
+-- perform a fixed-point relaxation step
+-- if we're done
+--    then check if we've a valid solution (we might not because of an erroneous assumption)
+--    else let p be a position holding a smallest set of unknown values
+--         let ns be these values
+--         try arbitrarily setting p := n for n in ns until one succeeds.
+solve : Square -> Maybe Square
+... sq = do bindMaybe sq' = relax sq
+                      if concrete? sq'
+                         then if solution? sq'
+                                 then returnMaybe sq'
+                                 else printEndline "Solution check failed." ;
+                                      failMaybe
+                         else do bindMaybe p = findChoice sq'
+                                           let strict (p, ns) = p
+                                           tryChoices sq' p ns
+         where tryChoices
+               ... _  _ []        = printEndline "Exhausted choices." ;
+                                    failMaybe
+               ... sq p (n :: ns) = printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "." ;
+                                    (case solve sq'' of
+                                     | Nothing -> printEndline <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "." ;
+                                                  tryChoices sq p ns
+                                     |         -> id
+                                    )
+                                    where sq'' = setVal sq p <| Known n
+
+
+
+-- ========== Parser ========== --
+
+-- It would be an enormous pain to type in the full
+-- specification of a puzzle using our representation; let's
+-- parse nice textual representations instead. We'll use `_`
+-- to represent an unknown value.
+
+-- Intermediate representation …
+typedef SquareSpec = [ [ Value ] ]
+
+-- and a conversion.
+buildSquare : SquareSpec -> Square
+... = zipWith buildRow nums >> concat >> foldl (setVal >> uncurry2) defaultSquare
+      where buildRow r vs = zip (map (Position r) nums) vs
+
+-- Build up a list of rows of values, then convert to our
+-- internal function-based representation.
+parse : [ String ] -> Square
+... = map (explode >> map parseChar) >> buildSquare
+        where parseChar
+              ... "_" = ??
+              ... c   = k (read c : Num)
+
+
+
+-- ========== Sample Puzzles ========== --
+
+-- It'd be no fun if we didn't have some puzzles to solve!
+-- No idea where I got most of these … (They're called `sN`
+-- where 's' is for 'sample'.)
+
+s1 = [ "7__583__6",
+       "__6__14_5",
+       "_52__6_83",
+       "3__2__958",
+       "5___78_6_",
+       "648_1_3__",
+       "_6_8_25__",
+       "__315__72",
+       "2156___3_"
+     ]
+
+s2 = [ "____5_34_",
+       "7_56_____",
+       "4____8_1_",
+       "__4_3__6_",
+       "2__5_1__4",
+       "_8__9_7__",
+       "_5_8____9",
+       "_____75_6",
+       "_12_6____"
+     ]
+
+s3 = [ "34___57__",
+       "5___69___",
+       "_91______",
+       "_628_____",
+       "____9____",
+       "_____438_",
+       "______43_",
+       "___51___7",
+       "__89___65"
+     ]
+
+s4 = [ "_6_87____",
+       "9______8_",
+       "_15_493_2",
+       "__295_8__",
+       "____3____",
+       "__3_284__",
+       "1_628_93_",
+       "_5______8",
+       "____94_1_"
+     ]
+
+s5 = [ "_6___57_2",
+       "__4_96_1_",
+       "8713_2___",
+       "5___713__",
+       "_3__5__7_",
+       "__782___5",
+       "___5_9687",
+       "_8_26_1__",
+       "7_64___2_"
+     ]
+
+s6 = [ "8_______3",
+       "5__8__7_4",
+       "_______6_",
+       "_6_98_1__",
+       "__7___4__",
+       "__8_61_9_",
+       "_5_______",
+       "3_2__4__8",
+       "1_______5"
+     ]
+
+s7 = [ "63_2__4__",
+       "_9__64__8",
+       "___8__51_",
+       "_1_6_9___",
+       "____2____",
+       "___4_7_5_",
+       "_53__6___",
+       "9__37__4_",
+       "__1__2_75"
+     ]
+
+s8 = [ "_386_5_1_",
+       "_____3_96",
+       "_6____5__",
+       "5______7_",
+       "__6_8_2__",
+       "_1______3",
+       "__1____4_",
+       "69_1_____",
+       "_2_4_786_"
+     ]
+
+s9 = [ "_________",
+       "8__2_9_56",
+       "__2___8_4",
+       "5_84__7__",
+       "1__7_6__3",
+       "__9__14_8",
+       "6_1___3__",
+       "48_6_7__2",
+       "_________"
+     ]
+
+s10 = [ "_________",
+        "_1_9__6__",
+        "___43_8__",
+        "58____16_",
+        "_6_7_3_2_",
+        "_______93",
+        "__9385___",
+        "__6__9_7_",
+        "__4______"
+      ]
+
+s11 = [ "_________",
+        "_1_9__6__",
+        "___43_8__",
+        "58____16_",
+        "_6_7_3_2_",
+        "_______93",
+        "__9385___",
+        "__6__9_7_",
+        "__4______"
+      ]
+
+s12 = [ "79_____64",
+        "___2__5__",
+        "_____62_3",
+        "2_398___5",
+        "_________",
+        "1___479__",
+        "5_17_____",
+        "__4__3___",
+        "63______7"
+      ]
+
+s13 = [ "__6___19_",
+        "4__76_3__",
+        "____2_4_5",
+        "9_____7__",
+        "____4____",
+        "__7_____8",
+        "7_8_3____",
+        "__5_71__4",
+        "_92___8__"
+      ]
+
+s14 = [ "__7__8___",
+        "14__7_8__",
+        "9__5____1",
+        "_6__1__2_",
+        "_9__4__7_",
+        "_7__5__8_",
+        "4____6__7",
+        "__3_2__56",
+        "___7__2__"
+      ]
+
+s15 = [ "_4_______",
+        "_3___124_",
+        "___4_6__7",
+        "8_9___63_",
+        "_________",
+        "_27___1_5",
+        "6__8_7___",
+        "_132___5_",
+        "_______9_"
+      ]
+
+-- This puzzle was published by Arto Inkala; it's claimed
+-- to be one of the hardest puzzles in the world; it
+-- *certainly* does take a lot of backtracking!
+s16 = [ "8________",
+        "__36_____",
+        "_7__9_2__",
+        "_5___7___",
+        "____457__",
+        "___1___3_",
+        "__1____68",
+        "__85___1_",
+        "_9____4__"
+      ]
+
+puzzles : [ (String, [ String ]) ]
+... = [ ("s1", s1), ("s2", s2), ("s3", s3), ("s4", s4), ("s5", s5), ("s6", s6), ("s7", s7), ("s8", s8), ("s9", s9), ("s10", s10), ("s11", s11), ("s12", s12), ("s13", s13), ("s14", s14), ("s15", s15) ]
+
+
+
+-- ========== Tie Everything Together ========== --
+
+main : () -> ()
+... _ = iter solvePuzzle puzzles
+        where solvePuzzle (name, sq) = printEndline <| "========== Considering Puzzle `" # name # "` ==========" ;
+                                       printEndline newline ;
+                                       (case sq |> parse >> solve of
+                                        | Just sol -> sol |> check >> showSolution >> printEndline
+                                        | Nothing  -> error "It didn't produce any solution!"
+                                       )
+              check sq               = if correctSolution? sq
+                                          then sq
+                                          else error "It's not correct!"
+              error                  = ("Bad news!" # _) >> uppercase >> fail
