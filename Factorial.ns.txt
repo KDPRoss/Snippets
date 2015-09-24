@@ -1,8 +1,8 @@
+PRAGMA Light
+PRAGMA Library Factorial
+
 -- Factorials in Tanager --
 -- K.D.P.Ross            --
-
-PRAGMA Library Factorial
-PRAGMA Light
 
 -- Newbie programmer
 
@@ -28,9 +28,9 @@ factorialRef x =
   let strict res = ref 1
              i   = ref 1
   let loop       = if !! i <= x
-                      then res := !! res * !! i ;
-                           i   := !! i + 1 ;
-                           loop
+                      then   res := !! res * !! i
+                           ; i   := !! i + 1
+                           ; loop
                       else !! res
   loop
 
@@ -218,20 +218,20 @@ module test exports testLoop, runTests, numTests where
                                        -- Check our definitions against the Prelude's.
 
   runPrint : (String, Num -> Num) -> Num -> Num
-  ... (l, f) n = let strict res = f n
-                 printEndline ("  " # l # " " # showProperFraction n # " => " # showProperFraction res) ;
-                 res
+  ... (l, f) n =   let strict res = f n
+                   printEndline $$ "  " # l # " " # showProperFraction n # " => " # showProperFraction res
+                 ; res
 
   agree : Num -> Bool
   ... = (alphaMap _ factorials) >> agreement
-          where agreement (x :: xs) = forall (_ == x) xs
+        where agreement (x :: xs) = forall (_ == x) xs
 
   testLoop : Num -> Bool
-  ... n = let strict testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline ;
-                                 if i |> agree >> not
-                                    then printEndline "FAILED!!!!!" ;
-                                         False
-                                    else True
+  ... n = let strict testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
+                                 ; if i |> agree >> not
+                                      then   printEndline "FAILED!!!!!"
+                                           ; False
+                                      else True
           (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
           -- Test 0 .. 7 (nice, small numbers) ... and some random
           -- values ... and a *big* value.

@@ -60,16 +60,16 @@ module compile where
         fun loop instr (stack -> []) where
         | cheekyShow \ Just _                 -> fail "Impossible."
                                                  -- Yes, this is *extremely* cheeky 0:~P
-        | (TNum n :: instr, _)                -> message "pushing num" ;
-                                                 loop instr (n :: stack)
-        | (TAdd :: instr,   n :: n' :: stack) -> message "adding top 2 el'ts on stack" ;
-                                                 loop instr (n + n' :: stack)
-        | (TMul :: instr,   n :: n' :: stack) -> message "multiplying top 2 el'ts on stack" ;
-                                                 loop instr (n * n' :: stack)
-        | ([],              [ n ])            -> message "final state" ;
-                                                 n
-        | _                                   -> message "STUCK STATE" ;
-                                                 fail "Bad program."
+        | (TNum n :: instr, _)                ->   message "pushing num"
+                                                 ; loop instr (n :: stack)
+        | (TAdd :: instr,   n :: n' :: stack) ->   message "adding top 2 el'ts on stack"
+                                                 ; loop instr (n + n' :: stack)
+        | (TMul :: instr,   n :: n' :: stack) ->   message "multiplying top 2 el'ts on stack"
+                                                 ; loop instr (n * n' :: stack)
+        | ([],              [ n ])            ->   message "final state"
+                                                 ; n
+        | _                                   ->   message "STUCK STATE"
+                                                 ; fail "Bad program."
 
 
 
@@ -111,15 +111,15 @@ module parser with monad, comb, parse exports parser as run where
 
 module rep where
   run : String -> ()
-  ... s = printEndline <| "Input:       " # s ;
-          printEndline <| "Parsed:      " # source.showExp sExp ;
-          printEndline <| "Interpreted: " # showProperFraction iRes ;
-          printEndline <| "Compiled:    " # tStr ;
-          printEndline <| "Result:      " # showProperFraction res
+  ... s =   printEndline <| "Input:       " # s
+          ; printEndline <| "Parsed:      " # source.showExp sExp
+          ; printEndline <| "Interpreted: " # showProperFraction iRes
+          ; printEndline <| "Compiled:    " # tStr
+          ; printEndline <| "Result:      " # showProperFraction res
           where sExp        = parser.run s
                 tExp        = compile.translate sExp
-                res         = printEndline "Running:" ;
-                              compile.run tExp
+                res         =   printEndline "Running:"
+                              ; compile.run tExp
                 iRes        = interpret.run sExp
                 tStr        = tExp |> map target.showExp >> intersperse ", " >> implode >> around "[ " " ]"
 

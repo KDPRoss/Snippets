@@ -121,10 +121,10 @@ getColFor : Position -> Square -> [ Value ]
 -- want to include that position, but not always.
 getThreeByThreeForGen : Bool -> Position -> Square -> [ Value ]
 ... include (Position r c) sq = concatMap getVal' ps
-                                where ps                   = concat $$ map ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
-                                      offsets              = range 0 2
-                                      r'                   = r - (r - 1) mod 3
-                                      c'                   = c - (c - 1) mod 3
+                                where ps      = concat $$ map ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
+                                      offsets = range 0 2
+                                      r'      = r - (r - 1) mod 3
+                                      c'      = c - (c - 1) mod 3
                                       getVal' = fun
                                                 | Position `r `c when not include -> []
                                                 | p                               ->  [ getVal sq p ]
@@ -251,17 +251,16 @@ relaxNeg : Square -> Position -> Maybe Value
            case v of
            | Choice ns -> let lazy header = printEndline <| "relax-(" # showPosition p # "->" # showValue v # ") with usedUp = " # showValue (Choice usedUp)
                           case filter ((_ `elem` usedUp) >> not) ns of
-                          | []           -> header ;
-                                            printEndline <| "Failed to relax- " # showPosition p # " -> " # showValue v # "." ;
-                                            failMaybe
-                          | [ n ]        -> header ;
-                                            printEndline <| " => <" # showNum n # ">" ;
-                                            n |> Known >> returnMaybe
-                          | Choice \ res -> (if v =/= res
-                                                then header ;
-                                                     printEndline <| " => " # showValue res
-                                            ) ;
-                                            returnMaybe res
+                          | []           ->   header
+                                            ; printEndline <| "Failed to relax- " # showPosition p # " -> " # showValue v # "."
+                                            ; failMaybe
+                          | [ n ]        ->   header
+                                            ; printEndline <| " => <" # showNum n # ">"
+                                            ; n |> Known >> returnMaybe
+                          | Choice \ res ->   if v =/= res
+                                                 then   header
+                                                      ; printEndline <| " => " # showValue res
+                                            ; returnMaybe res
            |           -> returnMaybe
 
 -- If no other position in the relevant row, column, or 3x3
@@ -270,26 +269,24 @@ relaxNeg : Square -> Position -> Maybe Value
 -- *must* be.) Here, we must consider each substructure
 -- separately.
 relaxPos : Square -> Position -> Maybe Value
-... sq p = (case v of
-            | Choice ns -> do bindMaybe ns1 = relaxRow ns
-                                        ns2 = relaxCol ns1
-                                        ns3 = relaxSq  ns2
-                                        case ns3 of
-                                        | [ n ] -> n |> Known >> returnMaybe
-                                        | _     -> returnMaybe v
-            |           -> returnMaybe
-           )
+... sq p = $$ case v of
+              | Choice ns -> do bindMaybe ns1 = relaxRow ns
+                                          ns2 = relaxCol ns1
+                                          ns3 = relaxSq  ns2
+                                          case ns3 of
+                                          | [ n ] -> n |> Known >> returnMaybe
+                                          | _     -> returnMaybe v
+              |           -> returnMaybe
            where relaxRow           = relaxGen getRowFor
                  relaxCol           = relaxGen getColFor
                  relaxSq            = relaxGen getThreeByThreeForExcept
                  relaxGen
                  ... _ ([ _ ] as n) = returnMaybe n
-                 ... f ns           = (case filter ((_ `elem` used) >> not) ns of
-                                       | [ n ] as ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used) ;
-                                                         printEndline <| " => <" # showNum n # ">" ;
-                                                         returnMaybe ns'
-                                       |              -> returnMaybe
-                                      )
+                 ... f ns           = $$ case filter ((_ `elem` used) >> not) ns of
+                                         | [ n ] as ns' ->   printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used)
+                                                           ; printEndline <| " => <" # showNum n # ">"
+                                                           ; returnMaybe ns'
+                                         |              -> returnMaybe
                                       where vs   = f p sq
                                             used = unknowns vs ++ knowns vs |> nub
                  v                  = getVal sq p
@@ -320,24 +317,22 @@ relax : Square -> Maybe Square
 ... sq = let strict unc = uncertainty sq
          if 0 == unc
             then returnMaybe sq
-            else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..." ;
-                 (do bindMaybe sq' = relaxIter sq
-                               printEndline <| "After relaxation:" ;
-                               sq' |> showSquare >> printEndline ;
-                               if sq' == sq
-                                  then printEndline "Done relaxing." ;
-                                       returnMaybe sq
-                                  else relax sq'
-                 )
+            else   printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
+                 ; do bindMaybe   sq' = relaxIter sq
+                                  printEndline <| "After relaxation:"
+                                ; sq' |> showSquare >> printEndline
+                                ; if sq' == sq
+                                     then   printEndline "Done relaxing."
+                                          ; returnMaybe sq
+                                     else relax sq'
 
 -- Assuming that we're stuck, choose some position that has
 -- a minimal number of possibilities. (We don't really need
 -- to do the full sort, of course.)
 findChoice : Square -> Maybe (Position, [ Num ])
-... sq = (case allPos |> map get >> concat >> sortByLength of
-          | c :: _ -> returnMaybe c
-          | []     -> failMaybe
-         )
+... sq = $$ case allPos |> map get >> concat >> sortByLength of
+            | c :: _ -> returnMaybe c
+            | []     -> failMaybe
          where get p           = case getVal sq p of
                                  | Known _   -> []
                                  | Choice ns -> [ (p, ns) ]
@@ -357,20 +352,19 @@ solve : Square -> Maybe Square
                       if concrete? sq'
                          then if solution? sq'
                                  then returnMaybe sq'
-                                 else printEndline "Solution check failed." ;
-                                      failMaybe
+                                 else   printEndline "Solution check failed."
+                                      ; failMaybe
                          else do bindMaybe p = findChoice sq'
                                            let strict (p, ns) = p
                                            tryChoices sq' p ns
          where tryChoices
-               ... _  _ []        = printEndline "Exhausted choices." ;
-                                    failMaybe
-               ... sq p (n :: ns) = printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "." ;
-                                    (case solve sq'' of
-                                     | Nothing -> printEndline <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "." ;
-                                                  tryChoices sq p ns
-                                     |         -> id
-                                    )
+               ... _  _ []        =   printEndline "Exhausted choices."
+                                    ; failMaybe
+               ... sq p (n :: ns) =   printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "."
+                                    ; case solve sq'' of
+                                      | Nothing ->   printEndline <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "."
+                                                   ; tryChoices sq p ns
+                                      |         -> id
                                     where sq'' = setVal sq p <| Known n
 
 
@@ -394,9 +388,9 @@ buildSquare : SquareSpec -> Square
 -- internal function-based representation.
 parse : [ String ] -> Square
 ... = map (explode >> map parseChar) >> buildSquare
-        where parseChar
-              ... "_" = ??
-              ... c   = k (read c : Num)
+      where parseChar
+            ... "_" = ??
+            ... c   = k (read c : Num)
 
 
 
@@ -594,12 +588,11 @@ puzzles : [ (String, [ String ]) ]
 
 main : () -> ()
 ... _ = iter solvePuzzle puzzles
-        where solvePuzzle (name, sq) = printEndline <| "========== Considering Puzzle `" # name # "` ==========" ;
-                                       printEndline newline ;
-                                       (case sq |> parse >> solve of
-                                        | Just sol -> sol |> check >> showSolution >> printEndline
-                                        | Nothing  -> error "It didn't produce any solution!"
-                                       )
+        where solvePuzzle (name, sq) =   printEndline <| "========== Considering Puzzle `" # name # "` =========="
+                                       ; printEndline newline
+                                       ; case sq |> parse >> solve of
+                                         | Just sol -> sol |> check >> showSolution >> printEndline
+                                         | Nothing  -> error "It didn't produce any solution!"
               check sq               = if correctSolution? sq
                                           then sq
                                           else error "It's not correct!"
