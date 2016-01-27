@@ -1,10 +1,26 @@
-PRAGMA Light
-PRAGMA Library TowersOfHanoi
+PRAGMA Tanager4
+PRAGMA Library Toy.TowersOfHanoi
 
--- Towers of Hanoi in Tanager --
--- K.D.P.Ross                 --
+-- Towers of Hanoi in Tanager.                        --
+--                                                    --
+-- Copyright 2015-2016 K.D.P.Ross <KDPRoss@gmail.com> --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
 
 -- See: https://en.wikipedia.org/wiki/Tower_of_Hanoi
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
 
 -- ========== Representation ========== --
 
@@ -49,8 +65,8 @@ move-one-unsafe : Num -> Num -> Towers -> Towers
 -- `move-one m n ts` moves the top disc from the `m`th tower
 -- to the `n`th.
 move-one : Num -> Num -> Towers -> Towers
-... m n ts =   if verbose
-                  then ts |> show >> printEndline
+... m n ts = if verbose
+                then ts |> show >> printEndline
              ; cases
                | ~ m == n
                | ~ invalid m
@@ -58,9 +74,9 @@ move-one : Num -> Num -> Towers -> Towers
                | ~ dms == []
                | ~ dns =/= [] and head dns < head dms
                | _                                    -> move-one-unsafe m n ts
-             where invalid o = o <= 0 or o > num-towers
-                   dms       = ts `nth` m
-                   dns       = ts `nth` n
+               where invalid o = o <= 0 or o > num-towers
+                     dms       = ts `nth` m
+                     dns       = ts `nth` n
 
 -- `move-n num m n ts` moves the top `num` discs from the
 -- `m`th tower to the `n`th. Assumes: All towers valid and
@@ -98,15 +114,15 @@ move-n : Num -> Num -> Num -> Towers -> Towers
 
 -- Arbitrarily, we'll start the discs at tower 1.
 start-state : Num -> Towers
-... = range 1 >> (_ :: [ [], [] ])
+... = range 1 >> (_ :: replicate (num-towers - 1) [])
 
 -- Again, we'll arbitrarily select tower 3 as the
 -- destination.
 solve : Num -> ()
-... n =   printEndline $$ "Solving with " # show n # " discs (from tower 1 to 3) ..."
+... n = printEndline $$ "Solving with " # show n # " discs (from tower 1 to 3) ..."
         ; let strict sol = move-n n 1 3 start
-          $$   sol |> show >> printEndline
-             ; if reverse start == sol
-                then printEndline "(Answer is correct.)"
-                else printEndline "FAIL!"
+          sol |> show >> printEndline
+          ; if reverse start == sol
+               then printEndline "(Answer is correct.)"
+               else printEndline "FAIL!"
         where start = start-state n

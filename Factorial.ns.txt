@@ -1,8 +1,30 @@
-PRAGMA Light
-PRAGMA Library Factorial
+PRAGMA Tanager4
+PRAGMA Library Toy.Factorial
 
--- Factorials in Tanager --
--- K.D.P.Ross            --
+-- Factorial Implementations in Tanager.              --
+--                                                    --
+-- Copyright 2015-2016 K.D.P.Ross <KDPRoss@gmail.com> --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
+
+
+
+-- This is a somewhat-tongue-in-cheek reply to a set of
+-- factorial implementations that I'd come across online
+-- mocking equally programmers of all styles.
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
 
 -- Newbie programmer
 
@@ -28,7 +50,7 @@ factorialRef x =
   let strict res = ref 1
              i   = ref 1
   let loop       = if !! i <= x
-                      then   res := !! res * !! i
+                      then res := !! res * !! i
                            ; i   := !! i + 1
                            ; loop
                       else !! res
@@ -135,7 +157,7 @@ factorialCPS =
 
 
 
--- Pointless programmer
+-- Point-free / 'pointless' programmer
 
 factorialPointless =
   (_ == 0) => const 1 ;^ ,2 >> ,(_, (_ - 1) >> factorialPointless) >> uncurry2 (_ * _)
@@ -185,7 +207,7 @@ module peano exports factorial where
 factorialPeano = peano.factorial
 
 
-
+`
 -- Quickchecker / SDET / QA / Tester
 module test exports testLoop, runTests, numTests where
   factorials : [ Num -> Num ]
@@ -218,8 +240,8 @@ module test exports testLoop, runTests, numTests where
                                        -- Check our definitions against the Prelude's.
 
   runPrint : (String, Num -> Num) -> Num -> Num
-  ... (l, f) n =   let strict res = f n
-                   printEndline $$ "  " # l # " " # showProperFraction n # " => " # showProperFraction res
+  ... (l, f) n = let strict res = f n
+                 printEndline $$ "  " # l # " " # showProperFraction n # " => " # showProperFraction res
                  ; res
 
   agree : Num -> Bool

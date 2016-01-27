@@ -1,8 +1,29 @@
-PRAGMA Light
+PRAGMA Tanager4
+PRAGMA Library Demo.ArithmeticCompiler
+
+-- Simple Arithmetic 'Compiler' in Tanager            --
+--                                                    --
+-- Copyright 2015-2016 K.D.P.Ross <KDPRoss@gmail.com> --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
 
 -- Trivial 'compiler' for arithmetic trees to arithmetic
--- stacks; based on an exercise from the Simon-Peyton-Jones
--- compilers book.
+-- stacks; based on an exercise from Simon Peyton-Jones.
+
+
 
 topLevel|loadFile "DDParse.ns.txt"
 
@@ -60,15 +81,15 @@ module compile where
         fun loop instr (stack -> []) where
         | cheekyShow \ Just _                 -> fail "Impossible."
                                                  -- Yes, this is *extremely* cheeky 0:~P
-        | (TNum n :: instr, _)                ->   message "pushing num"
+        | (TNum n :: instr, _)                -> message "pushing num"
                                                  ; loop instr (n :: stack)
-        | (TAdd :: instr,   n :: n' :: stack) ->   message "adding top 2 el'ts on stack"
+        | (TAdd :: instr,   n :: n' :: stack) -> message "adding top 2 el'ts on stack"
                                                  ; loop instr (n + n' :: stack)
-        | (TMul :: instr,   n :: n' :: stack) ->   message "multiplying top 2 el'ts on stack"
+        | (TMul :: instr,   n :: n' :: stack) -> message "multiplying top 2 el'ts on stack"
                                                  ; loop instr (n * n' :: stack)
-        | ([],              [ n ])            ->   message "final state"
+        | ([],              [ n ])            -> message "final state"
                                                  ; n
-        | _                                   ->   message "STUCK STATE"
+        | _                                   -> message "STUCK STATE"
                                                  ; fail "Bad program."
 
 
@@ -83,19 +104,19 @@ module parser with monad, comb, parse exports parser as run where
 
   parseNum : Parser SourceExp
   ... = (many1 (sat ((_ >= "0") and^ (_ <= "9"))) `post` toNum)
-          where toNum = implode >> read >> SNum
+        where toNum = implode >> read >> SNum
 
   parseSexp : Parser SourceExp
   ... = parseNum + bracketed
-          where bracketed = word "(" > $$ \ _ -> parseAdd <| word ")"
+        where bracketed = word "(" > $$ \ _ -> parseAdd <| word ")"
 
   parseMul : Parser SourceExp
   ... = parseMulProper + parseSexp
-          where parseMulProper = (parseSexp <| spaces <| word "*") * (\ _ -> spaces |> parseMul) `post` uncurry2 SMul
+        where parseMulProper = (parseSexp <| spaces <| word "*") * (\ _ -> spaces |> parseMul) `post` uncurry2 SMul
 
   parseAdd : Parser SourceExp
   ... = parseAddProper + parseMul
-          where parseAddProper = (parseMul <| spaces <| word "+") * (\ _ -> spaces |> parseAdd) `post` uncurry2 SAdd
+        where parseAddProper = (parseMul <| spaces <| word "+") * (\ _ -> spaces |> parseAdd) `post` uncurry2 SAdd
 
   parseExp : Parser SourceExp
   ... = maybe spaces > $$ \ _ -> parseAdd <| maybe spaces <| eof
@@ -111,16 +132,16 @@ module parser with monad, comb, parse exports parser as run where
 
 module rep where
   run : String -> ()
-  ... s =   printEndline <| "Input:       " # s
+  ... s = printEndline <| "Input:       " # s
           ; printEndline <| "Parsed:      " # source.showExp sExp
           ; printEndline <| "Interpreted: " # showProperFraction iRes
           ; printEndline <| "Compiled:    " # tStr
           ; printEndline <| "Result:      " # showProperFraction res
-          where sExp        = parser.run s
-                tExp        = compile.translate sExp
-                res         =   printEndline "Running:"
-                              ; compile.run tExp
-                iRes        = interpret.run sExp
-                tStr        = tExp |> map target.showExp >> intersperse ", " >> implode >> around "[ " " ]"
+          where sExp = parser.run s
+                tExp = compile.translate sExp
+                res  = printEndline "Running:"
+                       ; compile.run tExp
+                iRes = interpret.run sExp
+                tStr = tExp |> map target.showExp >> intersperse ", " >> implode >> around "[ " " ]"
 
 main = rep.run
