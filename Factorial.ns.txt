@@ -207,7 +207,7 @@ module peano exports factorial where
 factorialPeano = peano.factorial
 
 
-`
+
 -- Quickchecker / SDET / QA / Tester
 module test exports testLoop, runTests, numTests where
   factorials : [ Num -> Num ]
