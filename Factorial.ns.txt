@@ -251,7 +251,7 @@ module test exports testLoop, runTests, numTests where
   testLoop : Num -> Bool
   ... n = let strict testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
                                  ; if i |> agree >> not
-                                      then   printEndline "FAILED!!!!!"
+                                      then printEndline "FAILED!!!!!"
                                            ; False
                                       else True
           (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
