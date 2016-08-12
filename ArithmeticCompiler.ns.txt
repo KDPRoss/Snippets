@@ -25,6 +25,12 @@ PRAGMA Library Demo.ArithmeticCompiler
 
 
 
+-- PRAGMA NoValidation --
+-- Can't validate this file because it requires some path
+-- settings.
+
+
+
 topLevel|loadFile "DDParse.ns.txt"
 
 -- ========== Source Language ========== --
