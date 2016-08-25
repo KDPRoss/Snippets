@@ -1,11 +1,11 @@
 PRAGMA Tanager4
 
--- Graph-components grouping in Tanager.              --
---                                                    --
--- Copyright 2016 K.D.P.Ross <KDPRoss@gmail.com>      --
---                                                    --
--- This code is licensed only for study and personal  --
--- enrichment.                                        --
+-- Graph-components grouping in Tanager.             --
+--                                                   --
+-- Copyright 2016 K.D.P.Ross <KDPRoss@gmail.com>     --
+--                                                   --
+-- This code is licensed only for study and personal --
+-- enrichment.                                       --
 
 -- /------------------------------------------\
 -- | ‘The raison  d'être  of a program  is to |
