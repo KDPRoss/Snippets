@@ -245,12 +245,7 @@ unknowns : [ Value ] -> [ Num ]
 -- relevant row, column, 3x3 subsquare. ('Negative' because
 -- we're reasoning about what the value *mustn't* be.)
 relaxNeg : Square -> Position -> Maybe Value
-... sq p = let lazy   usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |> alphaMap p >> alphaMap sq >> concat >> knowns
-           let strict v            = getVal sq p
-                      printEndline = if verbose
-                                        then printEndline
-                                        else ignore
-           case v of
+... sq p = case v of
            | Choice ns -> let lazy header = printEndline <| "relax-(" # showPosition p # "->" # showValue v # ") with usedUp = " # showValue (Choice usedUp)
                           case filter ((_ `elem` usedUp) >> not) ns of
                           | []           -> header
@@ -264,6 +259,9 @@ relaxNeg : Square -> Position -> Maybe Value
                                                     ; printEndline <| " => " # showValue res
                                             ; returnMaybe res
            |           -> returnMaybe
+           where usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |> alphaMap p >> alphaMap sq >> concat >> knowns
+                 v            = getVal sq p
+                 printEndline = verbose => printEndline ; ignore
 
 -- If no other position in the relevant row, column, or 3x3
 -- subsquare can take a value, then this one must take it.
@@ -292,9 +290,7 @@ relaxPos : Square -> Position -> Maybe Value
                                       where vs   = f p sq
                                             used = unknowns vs ++ knowns vs |> nub
                  v                  = getVal sq p
-                 printEndline       = if verbose
-                                         then printEndline
-                                         else ignore
+                 printEndline       = verbose => printEndline ; ignore
 
 -- There are all sorts of optimisations that we could
 -- consider: Among them, for instance, *not* setting a

@@ -51,7 +51,7 @@ factorialRef x =
              i   = ref 1
   let loop       = if !! i <= x
                       then res := !! res * !! i
-                           ; i   := !! i + 1
+                           ; i := !! i + 1
                            ; loop
                       else !! res
   loop
@@ -151,7 +151,7 @@ factorialDo
 -- CPS'ed programmer
 
 factorialCPS =
-  fun f {} (k -> id) where
+  fun f {}(k -> id) where
   | 0 -> k 1
   | n -> f (n - 1) ((_ * n) >> k)
 
@@ -212,32 +212,32 @@ factorialPeano = peano.factorial
 module test exports testLoop, runTests, numTests where
   factorials : [ Num -> Num ]
   ... = map runPrint facs
-          where factorialPeanoHack n = if n < 7
-                                          then factorialPeano n
-                                          else fac n
-                                       -- `factorialPeano` is too slow!
-                align                = map pad
-                                         where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
-                                               n     = facs' |> map (fst >> stringLength) >> foldl1 max
-                                       -- Let's make things pretty 0:~P
-                facs                 = facs' |> unzip >> first align >> uncurry2 zip
-                facs'                = [ ("<prelude-fac>", fac),
-                                         ("factorialNewb", factorialNewb),
-                                         ("factorialYoda", factorialYoda),
-                                         ("factorialRef", factorialRef),
-                                         ("factorialTyped", factorialTyped),
-                                         ("factorialTanager", factorialTanager),
-                                         ("factorialSafe", factorialSafe),
-                                         ("factorialClause", factorialClause),
-                                         ("factorialCase", factorialCase),
-                                         ("factorialBrackets", factorialBrackets),
-                                         ("factorialMonad", factorialMonad),
-                                         ("factorialCPS", factorialCPS),
-                                         ("factorialPointless", factorialPointless),
-                                         ("factorialRange", factorialRange),
-                                         ("factorialPeano", factorialPeanoHack)
-                                       ]
-                                       -- Check our definitions against the Prelude's.
+        where factorialPeanoHack n = if n < 7
+                                        then factorialPeano n
+                                        else fac n
+                                     -- `factorialPeano` is too slow!
+              align                = map pad
+                                     where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
+                                           n     = facs' |> map (fst >> stringLength) >> foldl1 max
+                                     -- Let's make things pretty 0:~P
+              facs                 = facs' |> unzip >> first align >> uncurry2 zip
+              facs'                = [ ("<prelude-fac>", fac),
+                                       ("factorialNewb", factorialNewb),
+                                       ("factorialYoda", factorialYoda),
+                                       ("factorialRef", factorialRef),
+                                       ("factorialTyped", factorialTyped),
+                                       ("factorialTanager", factorialTanager),
+                                       ("factorialSafe", factorialSafe),
+                                       ("factorialClause", factorialClause),
+                                       ("factorialCase", factorialCase),
+                                       ("factorialBrackets", factorialBrackets),
+                                       ("factorialMonad", factorialMonad),
+                                       ("factorialCPS", factorialCPS),
+                                       ("factorialPointless", factorialPointless),
+                                       ("factorialRange", factorialRange),
+                                       ("factorialPeano", factorialPeanoHack)
+                                     ]
+                                     -- Check our definitions against the Prelude's.
 
   runPrint : (String, Num -> Num) -> Num -> Num
   ... (l, f) n = let strict res = f n

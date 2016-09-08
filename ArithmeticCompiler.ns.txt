@@ -82,11 +82,7 @@ module compile where
   ... (SMul e e') = translate e ++ translate e' :@ TMul
 
   run : [ TargetExp ] -> Num
-  ... = let strict cheekyShow = show >> ("  " # _) >> printEndline >> const Nothing
-                   message    = around "    <" ">" >> printEndline
-        fun loop instr (stack -> []) where
-        | cheekyShow \ Just _                 -> fail "Impossible."
-                                                 -- Yes, this is *extremely* cheeky 0:~P
+  ... = fun loop {instr}{stack -> []}(synth (instr, stack) |> show >> ("  "  # _) >> printEndline) where
         | (TNum n :: instr, _)                -> message "pushing num"
                                                  ; loop instr (n :: stack)
         | (TAdd :: instr,   n :: n' :: stack) -> message "adding top 2 el'ts on stack"
@@ -97,6 +93,7 @@ module compile where
                                                  ; n
         | _                                   -> message "STUCK STATE"
                                                  ; fail "Bad program."
+        where message = around "    <" ">" >> printEndline
 
 
 
