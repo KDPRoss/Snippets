@@ -1,5 +1,5 @@
 PRAGMA Tanager4
-PRAGMA Library Toy.Levenshtein
+PRAGMA Library Demo.Levenshtein
 
 -- Levenshtein distance in Tanager.                   --
 --                                                    --
@@ -23,15 +23,15 @@ PRAGMA Library Toy.Levenshtein
 module naive where
   levenshtein : String -> String -> Num
   ... s t = fun dist -> (i -> stringLength s)(j -> stringLength t) where
-            | (_, 0)                   -> i
-            | (0, _)                   -> j
-            | _                        -> foldl1 min [ del, ins, subst ]
-                                          where del   = dist (i - 1) j       + 1
-                                                ins   = dist i       (j - 1) + 1
-                                                subst = dist (i - 1) (j - 1) + cost
-                                                cost  = if nth ss i == nth ts j
-                                                           then 0
-                                                           else 1
+            | (_, 0) -> i
+            | (0, _) -> j
+            | _      -> foldl1 min [ del, ins, subst ]
+                        where del   = dist (i - 1) j       + 1
+                              ins   = dist i       (j - 1) + 1
+                              subst = dist (i - 1) (j - 1) + cost
+                              cost  = if nth ss i == nth ts j
+                                         then 0
+                                         else 1
             where ss = explode s
                   ts = explode t
 

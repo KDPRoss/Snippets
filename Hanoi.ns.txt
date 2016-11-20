@@ -1,5 +1,5 @@
 PRAGMA Tanager4
-PRAGMA Library Toy.TowersOfHanoi
+PRAGMA Library Demo.TowersOfHanoi
 
 -- Towers of Hanoi in Tanager.                        --
 --                                                    --

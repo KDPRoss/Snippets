@@ -1,4 +1,5 @@
 PRAGMA Tanager4
+PRAGMA Library Demo.GraphComponents
 
 -- Graph-components grouping in Tanager.             --
 --                                                   --
@@ -7,6 +8,8 @@ PRAGMA Tanager4
 -- This code is licensed only for study and personal --
 -- enrichment.                                       --
 
+
+
 -- /------------------------------------------\
 -- | ‘The raison  d'être  of a program  is to |
 -- | be  a  mathematically-elegant  object of |
@@ -14,6 +17,8 @@ PRAGMA Tanager4
 -- | it  occasionally   computes  something.’ |
 -- |                             - K.D.P.Ross |
 -- \------------------------------------------/
+
+
 
 topLevel|loadFile "Prelude.Extended.ns.lib"
 
