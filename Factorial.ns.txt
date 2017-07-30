@@ -141,7 +141,8 @@ factorialMonad =
 -- Haskelly monadic programmer
 
 factorialDo
-... 0 = return 1 with idMonad
+... 0 = using idMonad
+        return 1
 ... n = using idMonad
         do >>= r = factorialDo (n - 1)
                return (n * r)
