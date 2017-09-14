@@ -308,13 +308,14 @@ relax  : Square -> Maybe Square
          if 0 == unc
             then returnMaybe sq
             else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
-                 relaxIter sq `bindMaybe` kont
-                 where kont sq' = printEndline <| "After relaxation:"
-                                  sq' |> showSquare >> printEndline
-                                  if sq' == sq
-                                     then printEndline "Done relaxing."
-                                          returnMaybe sq
-                                     else relax sq'
+                 relaxIter sq `bindMaybe` (\ sq' ->
+                   | printEndline <| "After relaxation:"
+                   | sq' |> showSquare >> printEndline
+                   | if sq' == sq
+                   |    then printEndline "Done relaxing."
+                   |         returnMaybe sq
+                   |    else relax sq'
+                   )
 
 -- Assuming that we're stuck, choose some position that has
 -- a minimal number of possibilities. (We don't really need
@@ -338,15 +339,17 @@ findChoice : Square -> Maybe (Position, [ Num ])
 --         let ns be these values
 --         try arbitrarily setting p := n for n in ns until one succeeds.
 solve  : Square -> Maybe Square
-... sq = relax sq `bindMaybe` kont
-         where kont sq' = if concrete? sq'
-                             then if solution? sq'
-                                     then returnMaybe sq'
-                                     else printEndline "Solution check failed."
-                                          failMaybe
-                             else findChoice sq' `bindMaybe` kont'
-                          where kont' p = let strict (p, ns) = p
-                                          tryChoices sq' p ns
+... sq = relax sq `bindMaybe` (\ sq' ->
+           | if concrete? sq'
+           |    then if solution? sq'
+           |            then returnMaybe sq'
+           |            else printEndline "Solution check failed."
+           |                 failMaybe
+           |    else findChoice sq' `bindMaybe` (\ p ->
+           |           | let strict (p, ns) = p
+           |           | tryChoices sq' p ns
+           |           )
+           )
          where tryChoices _  _ []        = printEndline "Exhausted choices."
                                            failMaybe
                ...        sq p (n :: ns) = printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "."

@@ -1,6 +1,8 @@
 PRAGMA Tanager4
 PRAGMA Library Demo.GraphComponents
 
+PRAGMA Tanager5 alias Prelude.Extended.ns.lib -> Prelude.Extended.lib.t5
+
 -- Graph-components grouping in Tanager.             --
 --                                                   --
 -- Copyright 2016 K.D.P.Ross <KDPRoss@gmail.com>     --
