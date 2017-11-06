@@ -120,7 +120,7 @@ getColFor             : Position -> Square -> [ Value ]
 -- want to include that position, but not always.
 getThreeByThreeForGen         : Bool -> Position -> Square -> [ Value ]
 ... include (Position r c) sq = concatMap getVal' ps
-                                where ps      = concat <| map ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
+                                where ps      = concatMap ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
                                       offsets = range 0 2
                                       r'      = r - (r - 1) mod 3
                                       c'      = c - (c - 1) mod 3
@@ -205,12 +205,20 @@ bindMaybe      : Maybe a -> (a -> Maybe b) -> Maybe b
 failMaybe : Maybe a
 ...       = Nothing
 
+-- Some nicer syntax.
+topLevel|defLevel 25 Left
+topLevel|defMixfix 25 "_ >>=M _"
+
+>>=M    = bindMaybe
+returnM = returnMaybe
+failM   = failMaybe
+
 mapM : (a -> Maybe b) -> [ a ] -> Maybe [ b ]
 ...  = fun loop f -> {}
-         []      -> returnMaybe []
-         x :: xs -> f x `bindMaybe`       (\ x'  ->
-                      loop xs `bindMaybe` (\ xs' ->
-                      returnMaybe <| x' :: xs'))
+         []      -> returnM []
+         x :: xs -> f x     >>=M (\ x'  ->
+                    loop xs >>=M (\ xs' ->
+                    returnM <| x' :: xs'))
 
 
 
@@ -242,16 +250,15 @@ relaxNeg : Square -> Position -> Maybe Value
                           case filter ((_ `elem` usedUp) >> not) ns
                             []           -> header
                                             printEndline <| "Failed to relax- " # showPosition p # " -> " # showValue v # "."
-                                            failMaybe
+                                            failM
                             [ n ]        -> header
                                             printEndline <| " => <" # showNum n # ">"
-                                            n |> Known >> returnMaybe
+                                            n |> Known >> returnM
                             Choice \ res -> if v =/= res
                                                then header
                                                     printEndline <| " => " # showValue res
-                                            ----------------------------------------------
-                                            returnMaybe res
-             n         -> returnMaybe n
+                                            returnM res
+             n         -> returnM n
            where usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |> alphaMap p >> alphaMap sq >> concat >> knowns
                  v            = getVal sq p
                  printEndline = verbose => printEndline ; ignore
@@ -263,22 +270,22 @@ relaxNeg : Square -> Position -> Maybe Value
 -- separately.
 relaxPos : Square -> Position -> Maybe Value
 ... sq p = case v
-             Choice ns -> relaxRow ns    `bindMaybe` (\ ns1 ->
-                            relaxCol ns1 `bindMaybe` (\ ns2 ->
-                            relaxSq ns2  `bindMaybe` postProc))
+             Choice ns -> relaxRow ns  >>=M (\ ns1 ->
+                          relaxCol ns1 >>=M (\ ns2 ->
+                          relaxSq ns2  >>=M postProc))
                           where postProc = fun
-                                             [ n ] -> n |> Known >> returnMaybe
-                                             _     -> returnMaybe v
-             n         -> returnMaybe n
+                                             [ n ] -> n |> Known >> returnM
+                                             _     -> returnM v
+             n         -> returnM n
            where relaxRow                = relaxGen getRowFor
                  relaxCol                = relaxGen getColFor
                  relaxSq                 = relaxGen getThreeByThreeForExcept
-                 relaxGen _ ([ _ ] as n) = returnMaybe n
+                 relaxGen _ ([ _ ] as n) = returnM n
                  ...      f ns           = case filter ((_ `elem` used) >> not) ns
                                              [ n ] as ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used)
                                                              printEndline <| " => <" # showNum n # ">"
-                                                             returnMaybe ns'
-                                             n            -> returnMaybe n
+                                                             returnM ns'
+                                             n            -> returnM n
                                            where vs   = f p sq
                                                  used = unknowns vs ++ knowns vs |> nub
                  v                       = getVal sq p
@@ -289,16 +296,16 @@ relaxPos : Square -> Position -> Maybe Value
 -- position to the value that it already has! Efficiency,
 -- however, isn't the point of this implementation ;~}
 relaxIter : Square -> Maybe Square
-... sq    = relaxPass relaxNeg sq    `bindMaybe` (\ rs  ->
-              update sq rs           `bindMaybe` (\ sq' ->
-              relaxPass relaxPos sq' `bindMaybe` (\ rs' ->
-              update sq' rs')))
+... sq    = relaxPass relaxNeg sq  >>=M (\ rs  ->
+            update sq rs           >>=M (\ sq' ->
+            relaxPass relaxPos sq' >>=M (\ rs' ->
+            update sq' rs')))
             where relax f sq p   = case getVal sq p
-                                     Known _ as v -> returnMaybe (p, v)
-                                     _            -> f sq p `bindMaybe` (\ v' ->
-                                                       returnMaybe (p, v'))
+                                     Known _ as v -> returnM (p, v)
+                                     _            -> f sq p >>=M (\ v' ->
+                                                     returnM (p, v'))
                   relaxPass f sq = mapM (relax f sq) allPos
-                  update sq      = foldl (setVal >> uncurry2) sq >> returnMaybe
+                  update sq      = foldl (setVal >> uncurry2) sq >> returnM
 
 -- Perform relaxations iteratively until a fixed point is
 -- reached. (Since we're printing our 'uncertainty' metric
@@ -306,24 +313,24 @@ relaxIter : Square -> Maybe Square
 relax  : Square -> Maybe Square
 ... sq = let strict unc = uncertainty sq
          if 0 == unc
-            then returnMaybe sq
+            then returnM sq
             else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
-                 relaxIter sq `bindMaybe` (\ sq' ->
-                   | printEndline <| "After relaxation:"
-                   | sq' |> showSquare >> printEndline
-                   | if sq' == sq
-                   |    then printEndline "Done relaxing."
-                   |         returnMaybe sq
-                   |    else relax sq'
-                   )
+                 relaxIter sq >>=M (\ sq' ->
+                 | printEndline <| "After relaxation:"
+                 | sq' |> showSquare >> printEndline
+                 | if sq' == sq
+                 |    then printEndline "Done relaxing."
+                 |         returnM sq
+                 |    else relax sq'
+                 )
 
 -- Assuming that we're stuck, choose some position that has
 -- a minimal number of possibilities. (We don't really need
 -- to do the full sort, of course.)
 findChoice : Square -> Maybe (Position, [ Num ])
 ... sq     = case allPos |> map get >> concat >> sortByLength
-               c :: _ -> returnMaybe c
-               []     -> failMaybe
+               c :: _ -> returnM c
+               []     -> failM
              where get p           = case getVal sq p
                                        Known _   -> []
                                        Choice ns -> [ (p, ns) ]
@@ -339,19 +346,17 @@ findChoice : Square -> Maybe (Position, [ Num ])
 --         let ns be these values
 --         try arbitrarily setting p := n for n in ns until one succeeds.
 solve  : Square -> Maybe Square
-... sq = relax sq `bindMaybe` (\ sq' ->
-           | if concrete? sq'
-           |    then if solution? sq'
-           |            then returnMaybe sq'
-           |            else printEndline "Solution check failed."
-           |                 failMaybe
-           |    else findChoice sq' `bindMaybe` (\ p ->
-           |           | let strict (p, ns) = p
-           |           | tryChoices sq' p ns
-           |           )
-           )
+... sq = relax sq >>=M (\ sq' ->
+         | if concrete? sq'
+         |    then if solution? sq'
+         |            then returnM sq'
+         |            else printEndline "Solution check failed."
+         |                 failM
+         |    else findChoice sq' >>=M (\ (p, ns) ->
+         |         tryChoices sq' p ns)
+         )
          where tryChoices _  _ []        = printEndline "Exhausted choices."
-                                           failMaybe
+                                           failM
                ...        sq p (n :: ns) = printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "."
                                            case solve sq''
                                              Nothing -> printEndline <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "."
@@ -577,14 +582,13 @@ puzzles : [ (String, [ String ]) ]
 
 -- ========== Tie Everything Together ========== --
 
-main : () -> ()
+main  : () -> ()
 ... _ = iter solvePuzzle puzzles
         where solvePuzzle (name, sq) = printEndline <| "========== Considering Puzzle `" # name # "` =========="
                                        printEndline newline
                                        case sq |> parse >> solve
                                          Just sol -> sol |> check >> showSolution >> printEndline
                                          Nothing  -> error "It didn't produce any solution!"
-                                       -------------------------------------------------------------------------
                                        "" |> replicate 3 >> iter printEndline
               check sq               = if correctSolution? sq
                                           then sq

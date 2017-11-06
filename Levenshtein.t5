@@ -102,10 +102,10 @@ monad = module exports levenshtein
                                            |                        |   Nothing -> case (i, j)
                                            |                        |                (_, 0) -> returnAndCache i j i
                                            |                        |                (0, _) -> returnAndCache i j j
-                                           |                        |                _      -> dist (i - 1) j       ==> (_ + 1)      >>= (\ del   ->
-                                           |                        |                            dist i       (j - 1) ==> (_ + 1)    >>= (\ ins   ->
-                                           |                        |                            dist (i - 1) (j - 1) ==> (_ + cost) >>= (\ subst ->
-                                           |                        |                            returnAndCache i j <| foldl1 min [ del, ins, subst ])))
+                                           |                        |                _      -> dist (i - 1) j       ==> (_ + 1)    >>= (\ del   ->
+                                           |                        |                          dist i       (j - 1) ==> (_ + 1)    >>= (\ ins   ->
+                                           |                        |                          dist (i - 1) (j - 1) ==> (_ + cost) >>= (\ subst ->
+                                           |                        |                          returnAndCache i j <| foldl1 min [ del, ins, subst ])))
                                            |                        |                          where cost = if nth ss i == nth ts j
                                            |                        |                                          then 0
                                            |                        |                                          else 1

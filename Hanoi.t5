@@ -67,7 +67,6 @@ move-one-unsafe : Num -> Num -> Towers -> Towers
 move-one   : Num -> Num -> Towers -> Towers
 ... m n ts = if verbose
                 then ts |> show >> printEndline
-             --------------------------------------------------------------
              cases
                m == n                             -> ~
                invalid m                          -> ~

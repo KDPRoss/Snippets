@@ -46,10 +46,10 @@ factorialTanager : Num -> Num
 -- Ultrasafe clever Tanagerer
 
 factorialSafe : Num -> Num
-... = fun f (acc -> 1){}
-        _ satisfying _ < 0 -> ~
-        0                  -> acc
-        n                  -> n |> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+...           = fun f (acc -> 1){}
+                  _ satisfying _ < 0 -> ~
+                  0                  -> acc
+                  n                  -> n |> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
 
 
 
@@ -81,10 +81,11 @@ idMonad = module
             >>=    : a -> (a -> b) -> b
             ...    = flip apply
 
-factorialMonad = using idMonad
-                 fun
+factorialMonad = fun
                    0 -> return 1
-                   n -> factorialMonad (n - 1) >>= ((n * _) >> return)
+                   n -> factorialMonad (n - 1) >>= (\ r ->
+                        return (n * r))
+                 with idMonad
 
 
 
