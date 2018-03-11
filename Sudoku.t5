@@ -3,7 +3,7 @@ PRAGMA Library Demo.Sudoku
 
 -- Sudoku Solver in Tanager.                          --
 --                                                    --
--- Copyright 2015-2017 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --
@@ -576,7 +576,22 @@ s16 = [ "8________",
       ]
 
 puzzles : [ (String, [ String ]) ]
-...     = [ ("s1", s1), ("s2", s2), ("s3", s3), ("s4", s4), ("s5", s5), ("s6", s6), ("s7", s7), ("s8", s8), ("s9", s9), ("s10", s10), ("s11", s11), ("s12", s12), ("s13", s13), ("s14", s14), ("s15", s15) ]
+...     = [ ("s1",  s1),
+            ("s2",  s2),
+            ("s3",  s3),
+            ("s4",  s4),
+            ("s5",  s5),
+            ("s6",  s6),
+            ("s7",  s7),
+            ("s8",  s8),
+            ("s9",  s9),
+            ("s10", s10),
+            ("s11", s11),
+            ("s12", s12),
+            ("s13", s13),
+            ("s14", s14),
+            ("s15", s15)
+          ]
 
 
 

@@ -3,7 +3,7 @@ PRAGMA Library Demo.Mandelbrot
 
 -- Mandelbrot Set renderer in Tanager.                --
 --                                                    --
--- Copyright 2016-2017 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright 2016-2018 K.D.P.Ross <KDPRoss@gmail.com> --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --
@@ -43,7 +43,7 @@ complex = module
             ... (Complex a b)               = sqrt <| a * a + b * b
 
             iterate                         : Num -> Complex -> Complex
-            ... n c                         = fun loop (n -> n)(c' -> c)
+            ...                             = fun loop n c -> (n -> n)(c' -> c)
                                                 _ when n <= 0       -> c'
                                                 _ when abs c' > 100 -> c'
                                                 _                   -> loop (n - 1) ((c' `mult` c') `add` c)

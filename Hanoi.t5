@@ -3,7 +3,7 @@ PRAGMA Library Demo.TowersOfHanoi
 
 -- Towers of Hanoi in Tanager.                        --
 --                                                    --
--- Copyright 2015-2017 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --
@@ -19,6 +19,10 @@ PRAGMA Library Demo.TowersOfHanoi
 -- | it  occasionally   computes  something.’ |
 -- |                             - K.D.P.Ross |
 -- \------------------------------------------/
+
+
+
+_ = topLevel|loadFile "Prelude.Extended.lib.t5"
 
 
 
@@ -39,26 +43,14 @@ verbose : Bool
 
 
 
--- ========== General Utilities ========== --
-
--- `set-nth xs n x` sets (purely-functionally) the `n`th
--- element of `xs` to `x`.
-set-nth    : [ a ] -> Num -> a -> [ a ]
-... xs n x = cases
-               n <= 0        -> ~
-               n > length xs -> ~
-               _             -> take (n - 1) xs ++ (x :: drop n xs)
-
-
-
 -- ========== Disc-Moving Logistics ========== --
 
 -- `move-one-unsafe m n ts` moves the top disc from the
 -- `m`th tower to the `nth` with no validity checks
 move-one-unsafe : Num -> Num -> Towers -> Towers
 ... m n ts      = ts''
-                  where ts''        = set-nth ts' m dms
-                        ts'         = set-nth ts  n (dm :: dns)
+                  where ts''        = setNth m dms         ts'
+                        ts'         = setNth n (dm :: dns) ts
                         (dm :: dms) = ts `nth` m
                         dns         = ts `nth` n
 
@@ -74,9 +66,9 @@ move-one   : Num -> Num -> Towers -> Towers
                dms == []                          -> ~
                dns =/= [] and head dns < head dms -> ~
                _                                  -> move-one-unsafe m n ts
-             where invalid o = o <= 0 or o > num-towers
-                   dms       = ts `nth` m
-                   dns       = ts `nth` n
+             where invalid = (_ <= 0) or^ (_ > num-towers)
+                   dms     = ts `nth` m
+                   dns     = ts `nth` n
 
 -- `move-n num m n ts` moves the top `num` discs from the
 -- `m`th tower to the `n`th. Assumes: All towers valid and
@@ -114,7 +106,7 @@ move-n         : Num -> Num -> Num -> Towers -> Towers
 
 -- Arbitrarily, we'll start the discs at tower 1.
 start-state : Num -> Towers
-...         = range 1 >> (_ :: replicate (num-towers - 1) [])
+...         = count >> (_ :: replicate (num-towers - 1) [])
 
 -- Again, we'll arbitrarily select tower 3 as the
 -- destination.

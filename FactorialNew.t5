@@ -1,8 +1,29 @@
 PRAGMA Tanager5
-PRAGMA Library Factorial
+PRAGMA Library Demo.Factorial
 
--- Factorials in Tanager --
--- K.D.P.Ross            --
+-- Factorial Implementations in Tanager.              --
+--                                                    --
+-- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
+
+
+
+-- This is a somewhat-tongue-in-cheek reply to a set of
+-- factorial implementations that I'd come across online
+-- mocking equally programmers of all styles.
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
 
 
 -- Newbie programmer
@@ -37,7 +58,7 @@ factorialRef x = let strict res = ref 1
 -- Idiomatic Tanager programmer
 
 factorialTanager : Num -> Num
-...              = fun f (acc -> 1) {}
+...              = fun f (acc -> 1){}
                      0 -> acc
                      n -> f (n * acc) (n - 1)
 
@@ -91,7 +112,7 @@ factorialMonad = fun
 
 -- CPS'ed programmer
 
-factorialCPS = fun f {} (k -> id)
+factorialCPS = fun f {}(k -> id)
                  0 -> k 1
                  n -> f (n - 1) ((_ * n) >> k)
 
@@ -118,31 +139,27 @@ new data Nat = Z
 
 peano = module exports factorial
           inject            : Num -> Nat
-          ...               = fun
-                                0 -> Z
-                                n -> n |> (_ - 1) >> inject >> S
+          ... 0             = Z
+          ... n             = n |> (_ - 1) >> inject >> S
 
           project           : Nat -> Num
-          ...               = fun
-                                S n -> 1 + project n
-                                Z   -> 0
+          ... (S n)         = 1 + project n
+          ... Z             = 0
 
           plus              : Nat -> Nat -> Nat
-          ...               = fun loop {} n
-                                S m' -> m' `plus` S n
-                                Z    ->  n
+          ... (S m) n       = m `plus` S n
+          ... Z     n       = n
 
           mult              : Nat -> Nat -> Nat
-          ...               = fun loop m -> {}
-                                S n -> m `plus` loop n
-                                Z   -> Z
+          ... m (S n)       = m `plus` (m `mult` n)
+          ... _ Z           = Z
 
           factorialInternal : Nat -> Nat
-          ...               = fun
-                                S n' as n -> n `mult` factorialInternal n'
-                                Z         -> S Z
+          ... (S n' as n)   = n `mult` factorialInternal n'
+          ... Z             = S Z
 
-          factorial         = inject >> factorialInternal >> project
+          factorial         : Num -> Num
+          ...               = inject >> factorialInternal >> project
 
 factorialPeano = peano.factorial
 
