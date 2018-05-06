@@ -44,14 +44,14 @@ factorialYoda x = if 0 == x
 
 -- Imperative programmer
 
-factorialRef x = let strict res = ref 1
-                            i   = ref 1
-                 let loop       = if !! i <= x
-                                     then res := !! res * !! i
-                                          i   := !! i + 1
-                                          loop
-                                     else !! res
+factorialRef x = let loop = if !! i <= x
+                               then res := !! res * !! i
+                                    i   := !! i + 1
+                                    loop
+                               else !! res
                  loop
+                 where res = ref 1
+                       i   = ref 1
 
 
 
@@ -195,23 +195,23 @@ test = module exports testLoop, runTests, numTests
                                                      -- Check our definitions against the Prelude's.
 
          runPrint     : (String, Num -> Num) -> Num -> Num
-         ... (l, f) n = let strict res = f n
-                        printEndline <| "  " # l # " " # showProperFraction n # " => " # showProperFraction res
+         ... (l, f) n = printEndline <| "  " # l # " " # showProperFraction n # " => " # showProperFraction res
                         res
+                        where res = f n
 
          agree        : Num -> Bool
          ...          = (alphaMap _ factorials) >> agreement
                         where agreement (x :: xs) = forall (_ == x) xs
 
          testLoop     : Num -> Bool
-         ... n        = let strict testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
-                                               if i |> agree >> not
-                                                  then printEndline "FAILED!!!!!"
-                                                       False
-                                                  else True
-                        (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
+         ... n        = (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
                         -- Test 0 .. 7 (nice, small numbers) ... and some random
                         -- values ... and a *big* value.
+                        where testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
+                                          if i |> agree >> not
+                                             then printEndline "FAILED!!!!!"
+                                                  False
+                                             else True
 
          runTests     : () -> ()
          ... _        = case time (\ _ -> !! numTests |> testLoop)

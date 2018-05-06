@@ -311,8 +311,7 @@ relaxIter : Square -> Maybe Square
 -- reached. (Since we're printing our 'uncertainty' metric
 -- anyhow, might well return early if this is `0`.)
 relax  : Square -> Maybe Square
-... sq = let strict unc = uncertainty sq
-         if 0 == unc
+... sq = if 0 == unc
             then returnM sq
             else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
                  relaxIter sq >>=M (\ sq' ->
@@ -323,6 +322,7 @@ relax  : Square -> Maybe Square
                  |         returnM sq
                  |    else relax sq'
                  )
+         where unc = uncertainty sq
 
 -- Assuming that we're stuck, choose some position that has
 -- a minimal number of possibilities. (We don't really need
