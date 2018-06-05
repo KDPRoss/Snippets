@@ -1,5 +1,8 @@
 PRAGMA Tanager5
 PRAGMA Library Demo.TowersOfHanoi
+PRAGMA TLSyntax
+
+
 
 -- Towers of Hanoi in Tanager.                        --
 --                                                    --
@@ -22,7 +25,7 @@ PRAGMA Library Demo.TowersOfHanoi
 
 
 
-_ = topLevel|loadFile "Prelude.Extended.lib.t5"
+_ = load "Prelude.Extended.lib.t5"
 
 
 

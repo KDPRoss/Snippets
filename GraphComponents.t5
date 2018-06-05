@@ -1,5 +1,8 @@
 PRAGMA Tanager5
 PRAGMA Library Demo.GraphComponents
+PRAGMA TLSyntax
+
+
 
 -- Graph-components grouping in Tanager.              --
 --                                                    --
@@ -20,7 +23,11 @@ PRAGMA Library Demo.GraphComponents
 
 
 
-_ = topLevel|loadFile "Prelude.Extended.lib.t5"
+_ = from "Prelude.Extended.lib.t5"
+      import [ "groupBy"
+             ]
+
+
 
 -- Convert an undirected graph (represented as a list of
 -- edges) to a list of connected components.

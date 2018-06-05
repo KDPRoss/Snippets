@@ -1,6 +1,8 @@
 PRAGMA Tanager5
 PRAGMA Library Demo.Sudoku
 
+
+
 -- Sudoku Solver in Tanager.                          --
 --                                                    --
 -- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --

@@ -1,6 +1,8 @@
 PRAGMA Tanager5
 PRAGMA Library Demo.Mandelbrot
 
+
+
 -- Mandelbrot Set renderer in Tanager.                --
 --                                                    --
 -- Copyright 2016-2018 K.D.P.Ross <KDPRoss@gmail.com> --
@@ -43,10 +45,11 @@ complex = module
             ... (Complex a b)               = sqrt <| a * a + b * b
 
             iterate                         : Num -> Complex -> Complex
-            ...                             = fun loop n c -> (n -> n)(c' -> c)
-                                                _ when n <= 0       -> c'
-                                                _ when abs c' > 100 -> c'
-                                                _                   -> loop (n - 1) ((c' `mult` c') `add` c)
+            ...                             = fun loop n c -> {n -> n} (c' -> c)
+                                                _ -> cases
+                                                       n <= 0       -> c'
+                                                       abs c' > 100 -> c'
+                                                       _            -> loop (n - 1) ((c' `mult` c') `add` c)
 
             numIters                        : Num
             ...                             = 10
@@ -55,11 +58,12 @@ complex = module
             ...                             = iterate numIters >> abs >> (_ <= 2)
 
 generate : Num -> ()
-... n    = fun loop (y -> -2)(x -> -2)
-             _ when y >= 2 -> ()
-             _ when x >= 2 -> printEndline ""
+... n    = fun loop {y -> -2} (x -> -2)
+             _ -> cases
+                    y >= 2 -> ()
+                    x >= 2 -> printEndline ""
                               loop (y + yStep) -2
-             _             -> | print | filled (Complex x y) => "*" ; " "
+                    _      -> print (filled (Complex x y) => "*" ; " ")
                               loop y (x + xStep)
            where xStep = 4 / n
                  yStep = xStep
