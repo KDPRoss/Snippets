@@ -1,0 +1,172 @@
+PRAGMA Tanager5
+PRAGMA Library Demo.RandomPDF
+PRAGMA TLSyntax
+
+-- Random-text-PDF generation in Tanager.             --
+--                                                    --
+-- Copyright 2018 K.D.P.Ross <KDPRoss@gmail.com>      --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
+
+_ = iter load
+      [ "Data.Stream.lib.t5",
+        "Prelude.Extended.lib.t5",
+        "System.Base.lib.t5"
+      ]
+
+
+
+-- Ah, I guess? This is the only dict file I seem to have.
+-- YMMV.
+
+dictFile : String
+...      = "/usr/share/dict/cracklib-small"
+
+-- Load dict, filter out short words and those with weird
+-- char's.
+
+vocab : Array String
+...   = dictFile |>
+          readFile-stream >>
+          (progress-stream _ -1) >>
+          filter-stream (goodWord and^
+                           longEnough
+                        ) >>
+          stream->list >>
+          make-array
+        where goodWord   = mr "^[a-z]*$"
+              longEnough = stringLength >>
+                             (_ >= 10)
+
+genWord : () -> String
+...     = let strict n = length* vocab
+          \ () ->
+            vocab >*> i
+            where i = n |> random >> (_ + 1)
+
+
+-- Bit of a hack: Tanager's random-number-generation
+-- behaviour uses a heuristic that will generate natural
+-- numbers if we pass `1`.
+
+randReal : () -> Num
+... ()   = random 0.9999999999
+
+-- Constants belong somewhere else; meh.
+
+genPunct : () -> String
+... _    = case randReal ()
+             _ satisfying (_ < commaP) -> ","
+             _ satisfying (_ < semiP)  -> ";"
+             _                         -> ""
+           where commaP = 0.1
+                 semiP  = 0.13
+
+genFinalPunct : () -> String
+... _         = case randReal ()
+                  _ satisfying (_ < questionP) -> "?"
+                  _ satisfying (_ < bangP)     -> "!"
+                  _                            -> "."
+                where questionP = 0.1
+                      bangP     = 0.11
+
+capitalise : String -> String
+... s      = case explode s
+               []      -> ""
+               c :: cs -> c |>
+                            uppercase >>
+                            (_ :: cs) >>
+                            implode
+
+-- Some of this code could be merged / generalised, but this
+-- is ‘rough-'n'-ready’ cowboy code.
+
+genSentence : () -> String
+... _       = words'' :@ (word # finalPunct) |>
+                intersperse " " >>
+                implode
+              where (word :: words) = n |>
+                                        count >>
+                                        map (ignore >>
+                                               genWord
+                                            )
+                    words'          = ,(Cons capitalise _) words
+                    words''         = zipWith (_ # _) words' puncts
+                    finalPunct      = genFinalPunct ()
+                    puncts          = words |>
+                                        map (ignore >>
+                                               genPunct
+                                            )
+                    n               = random (maxWords - minWords + 1) + minWords
+                    minWords        = 3
+                    maxWords        = 20
+
+genParagraph : () -> String
+... _        = n |>
+                 count >>
+                 map (ignore >>
+                        genSentence
+                     ) >>
+                 intersperse " " >>
+                 implode
+               where n            = random (maxSentences - minSentences) + minSentences
+                     minSentences = 5
+                     maxSentences = 25
+
+-- Tie things together: For object-level processing, load the
+-- standard libraries, set a random title and the author, etc.
+
+genDoc  : String -> Num -> ()
+... f n = writeFile f text
+          where text          = header ++ body ++ footer
+                body          = n |>
+                                  count >>
+                                  map (ignore >>
+                                         genParagraph
+                                      ) >>
+                                  intersperse "[]"
+                header        = intersperse ""
+                                  [ "@ topLevel|loadFile 'All.All.lib.t5'",
+                                    "@ docAuthor    := " # quote # author # quote,
+                                    "@ docTitle     := " # quote # title # quote,
+                                    "@ processLatex := processLatexMakeClosed",
+                                    ""
+                                  ]
+                footer        = []
+                author        = "Big Bubsy" -- Because … who else would it be‽
+                title         = numTitleWords |>
+                                  count >>
+                                  map (ignore >>
+                                         genWord >>
+                                         capitalise
+                                      ) >>
+                                  intersperse " " >>
+                                  implode
+                numTitleWords = 6
+
+
+
+-- Generate a .pdf with specified number of paragraphs; run
+-- Tanager on it … from Tanager.
+
+genPdf  : String -> Num -> ()
+... f n = genDoc t5file n
+          evalNoResult cmd
+          where t5file   = f # t5Ext
+                t5Ext    = ".txt.t5"
+                latexExt = ".tex"
+                cmd      = "cd " # dir # " ; Tanager -batch -i " # t5file # " -o " # f # latexExt # " -s Quick"
+                [ dir ]  = evalResult <| "dirname " # f
