@@ -41,6 +41,6 @@ to-components : [ (a, a) ] -> [ [ a ] ]
                                                                         Just ns' -> ns ++ map 2of2 ns'
                                                                         Nothing  -> ns
                   _ :: ns                              -> loop unseen res cur ns
-                where nodes    = es |> unzip >> uncurry2 (_ ++ _) >> make-set
+                where nodes    = es |> unzip >> uncurry2 (++) >> make-set
                       children = es ++ map swap es |> groupBy 1of2
                       emptyS   = sCard >> (0 == _)

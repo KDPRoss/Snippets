@@ -104,7 +104,7 @@ genSentence : () -> String
                                                genWord
                                             )
                     words'          = ,(Cons capitalise _) words
-                    words''         = zipWith (_ # _) words' puncts
+                    words''         = zipWith (#) words' puncts
                     finalPunct      = genFinalPunct ()
                     puncts          = words |>
                                         map (ignore >>

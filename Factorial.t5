@@ -130,7 +130,7 @@ factorialPointless = (_ == 0) => const 1 ;^ ,2 >> ,(_, (_ - 1) >> factorialPoint
 -- this, actually ... Just need a good deforester /
 -- supercompiler!
 
-factorialRange = max 1 >> range 1 >> foldl (_ * _) 1
+factorialRange = max 1 >> range 1 >> foldl (*) 1
 
 
 
