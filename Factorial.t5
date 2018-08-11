@@ -137,7 +137,7 @@ factorialRange = max 1 >> range 1 >> foldl (*) 1
 -- Oh, hell, I might as well do Peano Arithmetic, also ;~P
 
 new data Nat = Z
-             | S Nat
+               S Nat
 
 peano = module exports factorial
           inject            : Num -> Nat

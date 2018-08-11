@@ -61,7 +61,7 @@ allPos : [ Position ]
 -- that `Choice [ _ ]` is never constructed.
 
 new data Value = Known Num
-               | Choice [ Num ]
+                 Choice [ Num ]
 
 -- These will be convenient for the common (fixed /
 -- completely-unknown) cases.
