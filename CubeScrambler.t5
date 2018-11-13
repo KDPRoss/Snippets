@@ -1,0 +1,77 @@
+PRAGMA Tanager5
+PRAGMA Library Demo.CubeScrambler
+PRAGMA TLSyntax
+
+
+
+-- 3x3 Rubik's-Cube scramble generator in Tanager.    --
+--                                                    --
+-- Copyright K.D.P.Ross <KDPRoss@gmail.com>           --
+--                                                    --
+-- This code is licensed only for study and personal  --
+-- enrichment.                                        --
+
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
+
+_ = from "Prelude.Extended.lib.t5"
+      import [ "chunk"
+             ]
+
+-- All the axes.
+make = explode >> make-set
+lr   = make "LR"
+ud   = make "UD"
+fb   = make "FB"
+ms   = lr \_/ ud \_/ fb
+
+-- Enable both orthogonal axes for next move.
+next = fun
+         (lr ?s _) \ True -> ms \s lr
+         (ud ?s _) \ True -> ms \s ud
+         (fb ?s _) \ True -> ms \s fb
+         _                -> ~
+
+-- Fair choice; `sChoose` should probably do something like
+-- this!
+oneOf xs = xs |> length >> random >> (1 + _) >> nth xs
+
+-- Choose:
+-- 1) An enabled axis to make a move on.
+-- 2) A specific move (forward, backward, or 180 degrees) on
+--    that axis.
+-- 3) Compute a new set of axes: Old set +
+--    orthogonal - current axis.
+choose cs = (m, cs')
+            where a   = cs |> from-set >> oneOf
+                  m   = oneOf [ a, a # "'", a # "2" ]
+                  cs' = (cs \_/ next a) -s a
+
+-- Generate an `n`-length sequerce of rotations that, by
+-- construction, is (most probably) irreducible. (Here is
+-- a sequence which can be shown to be the identity but
+-- which *is* generable by the algorithm: `F2 U L R' F2 L'
+-- R U2 L R' F2 L' R U2 L R' F2 L' R U F2`; it's likely that
+-- there's a shorter reducible sequence.)
+seq = fun loop {n}(res -> [])(cs -> ms)
+        0 -> res
+        _ -> loop (n - 1) (m :: res) cs'
+             where (m, cs') = choose cs
+
+-- Generate and print a scramble; 30 is somewhat arbitrary.
+gen () = 30 |>
+           seq >>
+           chunk 10 >>
+           iter (intersperse ", " >>
+                   implode >>
+                   printEndline
+                )
