@@ -1,6 +1,5 @@
 PRAGMA Tanager5
-PRAGMA Library Demo.TowersOfHanoi
-PRAGMA TLSyntax
+PRAGMA Library "Demo.TowersOfHanoi"
 
 
 

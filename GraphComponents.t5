@@ -1,6 +1,5 @@
 PRAGMA Tanager5
-PRAGMA Library Demo.GraphComponents
-PRAGMA TLSyntax
+PRAGMA Library "Demo.GraphComponents"
 
 
 

@@ -1,5 +1,5 @@
 PRAGMA Tanager5
-PRAGMA Library Demo.Sudoku
+PRAGMA Library "Demo.Sudoku"
 
 
 
@@ -208,8 +208,8 @@ failMaybe : Maybe a
 ...       = Nothing
 
 -- Some nicer syntax.
-topLevel|defLevel 25 Left
-topLevel|defMixfix 25 "_ >>=M _"
+_ = level 25 is Left
+    mixfix "_ >>=M _" @ 25
 
 >>=M    = bindMaybe
 returnM = returnMaybe

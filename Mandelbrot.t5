@@ -1,5 +1,5 @@
 PRAGMA Tanager5
-PRAGMA Library Demo.Mandelbrot
+PRAGMA Library "Demo.Mandelbrot"
 
 
 

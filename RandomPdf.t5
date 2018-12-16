@@ -1,7 +1,7 @@
 PRAGMA Tanager5
+PRAGMA Library "Demo.RandomPDF"
+
 -- PRAGMA NoValidation --
-PRAGMA Library Demo.RandomPDF
-PRAGMA TLSyntax
 
 -- Random-text-PDF generation in Tanager.             --
 --                                                    --
