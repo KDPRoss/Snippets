@@ -279,19 +279,19 @@ relaxPos : Square -> Position -> Maybe Value
                                              [ n ] -> n |> Known >> returnM
                                              _     -> returnM v
              n         -> returnM n
-           where relaxRow                = relaxGen getRowFor
-                 relaxCol                = relaxGen getColFor
-                 relaxSq                 = relaxGen getThreeByThreeForExcept
-                 relaxGen _ ([ _ ] as n) = returnM n
-                 ...      f ns           = case filter ((_ `elem` used) >> not) ns
-                                             [ n ] as ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used)
-                                                             printEndline <| " => <" # showNum n # ">"
-                                                             returnM ns'
-                                             n            -> returnM n
-                                           where vs   = f p sq
-                                                 used = unknowns vs ++ knowns vs |> nub
-                 v                       = getVal sq p
-                 printEndline            = verbose => printEndline ; ignore
+           where relaxRow               = relaxGen getRowFor
+                 relaxCol               = relaxGen getColFor
+                 relaxSq                = relaxGen getThreeByThreeForExcept
+                 relaxGen _ ([ _ ] & n) = returnM n
+                 ...      f ns          = case filter ((_ `elem` used) >> not) ns
+                                            [ n ] & ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used)
+                                                           printEndline <| " => <" # showNum n # ">"
+                                                           returnM ns'
+                                            n           -> returnM n
+                                          where vs   = f p sq
+                                                used = unknowns vs ++ knowns vs |> nub
+                 v                      = getVal sq p
+                 printEndline           = verbose => printEndline ; ignore
 
 -- There are all sorts of optimisations that we could
 -- consider: Among them, for instance, *not* setting a
@@ -303,9 +303,9 @@ relaxIter : Square -> Maybe Square
             relaxPass relaxPos sq' >>=M (\ rs' ->
             update sq' rs')))
             where relax f sq p   = case getVal sq p
-                                     Known _ as v -> returnM (p, v)
-                                     _            -> f sq p >>=M (\ v' ->
-                                                     returnM (p, v'))
+                                     Known _ & v -> returnM (p, v)
+                                     _           -> f sq p >>=M (\ v' ->
+                                                    returnM (p, v'))
                   relaxPass f sq = mapM (relax f sq) allPos
                   update sq      = foldl (setVal >> uncurry2) sq >> returnM
 

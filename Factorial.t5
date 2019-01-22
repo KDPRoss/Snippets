@@ -157,7 +157,7 @@ peano = module exports factorial
           ... _ Z           = Z
 
           factorialInternal : Nat -> Nat
-          ... (S n' as n)   = n `mult` factorialInternal n'
+          ... (S n' & n)    = n `mult` factorialInternal n'
           ... Z             = S Z
 
           factorial         : Num -> Num
