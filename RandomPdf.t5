@@ -23,8 +23,7 @@ PRAGMA Library "Demo.RandomPDF"
 
 
 _ = iter load
-      [ "Data.Stream.lib.t5",
-        "Prelude.Extended.lib.t5",
+      [ "Prelude.Extended.lib.t5",
         "System.Base.lib.t5"
       ]
 
@@ -70,17 +69,17 @@ randReal : () -> Num
 
 genPunct : () -> String
 ... _    = case randReal ()
-             _ satisfying (_ < commaP) -> ","
-             _ satisfying (_ < semiP)  -> ";"
-             _                         -> ""
+             <(_ < commaP)> -> ","
+             <(_ < semiP)>  -> ";"
+             _              -> ""
            where commaP = 0.1
                  semiP  = 0.13
 
 genFinalPunct : () -> String
 ... _         = case randReal ()
-                  _ satisfying (_ < questionP) -> "?"
-                  _ satisfying (_ < bangP)     -> "!"
-                  _                            -> "."
+                  <(_ < questionP)> -> "?"
+                  <(_ < bangP)>     -> "!"
+                  _                 -> "."
                 where questionP = 0.1
                       bangP     = 0.11
 

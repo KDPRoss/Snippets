@@ -24,38 +24,46 @@ PRAGMA Library "Demo.Mandelbrot"
 
 new data Complex = Complex Num Num
 
-complex = module
-            inject                          : Num -> Num -> Complex
-            ...                             = Complex
+complex = { inject,
+            project,
+            mult,
+            add,
+            abs,
+            iterate,
+            numIters,
+            filled
+          }
+          where inject                          : Num -> Num -> Complex
+                ...                             = Complex
 
-            project                         : Complex -> (Num, Num)
-            ... (Complex r c)               = (r, c)
+                project                         : Complex -> (Num, Num)
+                ... (Complex r c)               = (r, c)
 
-            mult                            : Complex -> Complex -> Complex
-            ... (Complex a b) (Complex c d) = Complex e f
-                                              where e = a * c - b * d
-                                                    f = b * c + a * d
+                mult                            : Complex -> Complex -> Complex
+                ... (Complex a b) (Complex c d) = Complex e f
+                                                  where e = a * c - b * d
+                                                        f = b * c + a * d
 
-            add                             : Complex -> Complex -> Complex
-            ... (Complex a b) (Complex c d) = Complex e f
-                                              where e = a + c
-                                                    f = b + d
+                add                             : Complex -> Complex -> Complex
+                ... (Complex a b) (Complex c d) = Complex e f
+                                                  where e = a + c
+                                                        f = b + d
 
-            abs                             : Complex -> Num
-            ... (Complex a b)               = sqrt <| a * a + b * b
+                abs                             : Complex -> Num
+                ... (Complex a b)               = sqrt <| a * a + b * b
 
-            iterate                         : Num -> Complex -> Complex
-            ...                             = fun loop n c -> {n -> n} (c' -> c)
-                                                _ -> cases
-                                                       n <= 0       -> c'
-                                                       abs c' > 100 -> c'
-                                                       _            -> loop (n - 1) ((c' `mult` c') `add` c)
+                iterate                         : Num -> Complex -> Complex
+                ...                             = fun loop n c -> {n -> n} (c' -> c)
+                                                    _ -> cases
+                                                           n <= 0       -> c'
+                                                           abs c' > 100 -> c'
+                                                           _            -> loop (n - 1) ((c' `mult` c') `add` c)
 
-            numIters                        : Num
-            ...                             = 10
+                numIters                        : Num
+                ...                             = 10
 
-            filled                          : Complex -> Bool
-            ...                             = iterate numIters >> abs >> (_ <= 2)
+                filled                          : Complex -> Bool
+                ...                             = iterate numIters >> abs >> (_ <= 2)
 
 generate : Num -> ()
 ... n    = fun loop {y -> -2} (x -> -2)
@@ -63,8 +71,11 @@ generate : Num -> ()
                     y >= 2 -> ()
                     x >= 2 -> printEndline ""
                               loop (y + yStep) -2
-                    _      -> print (filled (Complex x y) => "*" ; " ")
+                    _      -> print (filled (inject x y) => "*" ; " ")
                               loop y (x + xStep)
            where xStep = 4 / n
                  yStep = xStep
-           with complex
+           with { filled,
+                  inject
+                }
+                with complex

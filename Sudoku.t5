@@ -156,8 +156,8 @@ showSolution : Square -> String
 -- Are there no unknown values?
 concrete? : Square -> Bool
 ... sq    = allPos |> map (getVal sq) >> forall isKnown
-            where isKnown (Known _) = True
-                  ...     _         = False
+            where isKnown Known... = True
+                  ...     _        = False
 
 -- Given that `concrete? sq`, do the all-known values form
 -- a valid Sudoku solution? (N.B., we *are* assuming that
@@ -173,7 +173,7 @@ solution? : Square -> Bool
                   subs              = concatMap (\ r -> map (Position r) nums') nums'
                                       where nums' = [ 1, 4, 7 ]
                   checkGen f        = nums |> map (f sq >> map extract) >> good
-                  good              = forall (sort >> (_ == nums))
+                  good              = forall (sort >> (nums == _))
                   extract (Known n) = n
 
 -- Just for completeness:
@@ -303,9 +303,9 @@ relaxIter : Square -> Maybe Square
             relaxPass relaxPos sq' >>=M (\ rs' ->
             update sq' rs')))
             where relax f sq p   = case getVal sq p
-                                     Known _ & v -> returnM (p, v)
-                                     _           -> f sq p >>=M (\ v' ->
-                                                    returnM (p, v'))
+                                     Known... & v -> returnM (p, v)
+                                     _            -> f sq p >>=M (\ v' ->
+                                                     returnM (p, v'))
                   relaxPass f sq = mapM (relax f sq) allPos
                   update sq      = foldl (setVal >> uncurry2) sq >> returnM
 

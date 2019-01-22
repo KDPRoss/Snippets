@@ -70,9 +70,9 @@ factorialTanager : Num -> Num
 
 factorialSafe : Num -> Num
 ...           = fun f (acc -> 1){}
-                  _ satisfying _ < 0 -> ~
-                  0                  -> acc
-                  n                  -> n |> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
+                  <(_ < 0)> -> ~
+                  0         -> acc
+                  n         -> n |> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
 
 
 
@@ -97,12 +97,14 @@ factorialCase : Num -> Num
 _ = level 25 is Left
     mixfix "_ >>= _" @ 25
 
-idMonad = module
-            return : a -> a
-            ...    = id
+idMonad = { return,
+            >>=
+          }
+          where return : a -> a
+                ...    = id
 
-            >>=    : a -> (a -> b) -> b
-            ...    = flip apply
+                >>=    : a -> (a -> b) -> b
+                ...    = flip apply
 
 factorialMonad = fun
                    0 -> return 1
@@ -122,7 +124,7 @@ factorialCPS = fun f {}(k -> id)
 
 -- Pointless programmer
 
-factorialPointless = (_ == 0) => const 1 ;^ ,2 >> ,(_, (_ - 1) >> factorialPointless) >> uncurry2 (_ * _)
+factorialPointless = (_ == 0) => const 1 ;^ ,2 >> ,(_, (_ - 1) >> factorialPointless) >> uncurry2 (*)
 
 
 
@@ -139,92 +141,96 @@ factorialRange = max 1 >> range 1 >> foldl (*) 1
 new data Nat = Z
                S Nat
 
-peano = module exports factorial
-          inject            : Num -> Nat
-          ... 0             = Z
-          ... n             = n |> (_ - 1) >> inject >> S
+peano = { factorial
+        }
+        where inject            : Num -> Nat
+              ... 0             = Z
+              ... n             = n |> (_ - 1) >> inject >> S
 
-          project           : Nat -> Num
-          ... (S n)         = 1 + project n
-          ... Z             = 0
+              project           : Nat -> Num
+              ... (S n)         = 1 + project n
+              ... Z             = 0
 
-          plus              : Nat -> Nat -> Nat
-          ... (S m) n       = m `plus` S n
-          ... Z     n       = n
+              plus              : Nat -> Nat -> Nat
+              ... (S m) n       = m `plus` S n
+              ... Z     n       = n
 
-          mult              : Nat -> Nat -> Nat
-          ... m (S n)       = m `plus` (m `mult` n)
-          ... _ Z           = Z
+              mult              : Nat -> Nat -> Nat
+              ... m (S n)       = m `plus` (m `mult` n)
+              ... _ Z           = Z
 
-          factorialInternal : Nat -> Nat
-          ... (S n' & n)    = n `mult` factorialInternal n'
-          ... Z             = S Z
+              factorialInternal : Nat -> Nat
+              ... (S n' & n)    = n `mult` factorialInternal n'
+              ... Z             = S Z
 
-          factorial         : Num -> Num
-          ...               = inject >> factorialInternal >> project
+              factorial         : Num -> Num
+              ...               = inject >> factorialInternal >> project
 
 factorialPeano = peano.factorial
 
 
 
 -- Quickchecker / SDET / QA / Tester
-test = module exports testLoop, runTests, numTests
-         factorials   : [ Num -> Num ]
-         ...          = map runPrint facs
-                        where factorialPeanoHack n = if n < 7
-                                                        then factorialPeano n
-                                                        else fac n
-                                                     -- `factorialPeano` is too slow!
-                              align                = map pad
-                                                     where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
-                                                           n     = facs' |> map (fst >> stringLength) >> foldl1 max
-                                                     -- Let's make things pretty 0:~P
-                              facs                 = facs' |> unzip >> first align >> uncurry2 zip
-                              facs'                = [ ("<prelude-fac>", fac),
-                                                       ("factorialNewb", factorialNewb),
-                                                       ("factorialYoda", factorialYoda),
-                                                       ("factorialRef", factorialRef),
-                                                       ("factorialTanager", factorialTanager),
-                                                       ("factorialSafe", factorialSafe),
-                                                       ("factorialClauses", factorialClauses),
-                                                       ("factorialCase", factorialCase),
-                                                       ("factorialMonad", factorialMonad),
-                                                       ("factorialCPS", factorialCPS),
-                                                       ("factorialPointless", factorialPointless),
-                                                       ("factorialRange", factorialRange),
-                                                       ("factorialPeano", factorialPeanoHack)
-                                                     ]
-                                                     -- Check our definitions against the Prelude's.
+test = { testLoop,
+         runTests,
+         numTests
+       }
+       where factorials   : [ Num -> Num ]
+             ...          = map runPrint facs
+                            where factorialPeanoHack n = if n < 7
+                                                            then factorialPeano n
+                                                            else fac n
+                                                         -- `factorialPeano` is too slow!
+                                  align                = map pad
+                                                         where pad s = s |> stringLength >> (n - _) >> range 0 >> map (const " ") >> implode >> (_ # s)
+                                                               n     = facs' |> map (fst >> stringLength) >> foldl1 max
+                                                         -- Let's make things pretty 0:~P
+                                  facs                 = facs' |> unzip >> first align >> uncurry2 zip
+                                  facs'                = [ ("<prelude-fac>", fac),
+                                                           ("factorialNewb", factorialNewb),
+                                                           ("factorialYoda", factorialYoda),
+                                                           ("factorialRef", factorialRef),
+                                                           ("factorialTanager", factorialTanager),
+                                                           ("factorialSafe", factorialSafe),
+                                                           ("factorialClauses", factorialClauses),
+                                                           ("factorialCase", factorialCase),
+                                                           ("factorialMonad", factorialMonad),
+                                                           ("factorialCPS", factorialCPS),
+                                                           ("factorialPointless", factorialPointless),
+                                                           ("factorialRange", factorialRange),
+                                                           ("factorialPeano", factorialPeanoHack)
+                                                         ]
+                                                         -- Check our definitions against the Prelude's.
 
-         runPrint     : (String, Num -> Num) -> Num -> Num
-         ... (l, f) n = printEndline <| "  " # l # " " # showProperFraction n # " => " # showProperFraction res
-                        res
-                        where res = f n
+             runPrint     : (String, Num -> Num) -> Num -> Num
+             ... (l, f) n = printEndline <| "  " # l # " " # showProperFraction n # " => " # showProperFraction res
+                            res
+                            where res = f n
 
-         agree        : Num -> Bool
-         ...          = (alphaMap _ factorials) >> agreement
-                        where agreement (x :: xs) = forall (_ == x) xs
+             agree        : Num -> Bool
+             ...          = (alphaMap _ factorials) >> agreement
+                            where agreement (x :: xs) = forall (_ == x) xs
 
-         testLoop     : Num -> Bool
-         ... n        = (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
-                        -- Test 0 .. 7 (nice, small numbers) ... and some random
-                        -- values ... and a *big* value.
-                        where testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
-                                          if i |> agree >> not
-                                             then printEndline "FAILED!!!!!"
-                                                  False
-                                             else True
+             testLoop     : Num -> Bool
+             ... n        = (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
+                            -- Test 0 .. 7 (nice, small numbers) ... and some random
+                            -- values ... and a *big* value.
+                            where testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline
+                                              if i |> agree >> not
+                                                 then printEndline "FAILED!!!!!"
+                                                      False
+                                                 else True
 
-         runTests     : () -> ()
-         ... _        = case time (\ _ -> !! numTests |> testLoop)
-                          (True, t) -> printEndline <| "All tests passed ... in " # showDecimal t # " seconds."
-                          (_,    t) -> printEndline <| "Failure ... in " # showDecimal t # " seconds."
+             runTests     : () -> ()
+             ... _        = case time (\ _ -> !! numTests |> testLoop)
+                              (True, t) -> printEndline <| "All tests passed ... in " # showDecimal t # " seconds."
+                              (_,    t) -> printEndline <| "Failure ... in " # showDecimal t # " seconds."
 
-         numTests     : Ref Num
-         ...          = ref 25
+             numTests     : Ref Num
+             ...          = ref 25
 
-         maxI         : Num
-         ...          = 500
+             maxI         : Num
+             ...          = 500
 
 main : () -> ()
 ...  = test.runTests

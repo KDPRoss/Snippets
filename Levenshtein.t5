@@ -22,56 +22,59 @@ PRAGMA Library "Demo.Levenshtein"
 
 
 
-naive = module
-          levenshtein : String -> String -> Num
-          ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)
-                          _ 0 -> i
-                          0 _ -> j
-                          _ _ -> foldl1 min [ del, ins, subst ]
-                                 where del   = dist (i - 1) j       + 1
-                                       ins   = dist i       (j - 1) + 1
-                                       subst = dist (i - 1) (j - 1) + cost
-                                       cost  = if nth ss i == nth ts j
-                                                  then 0
-                                                  else 1
-                        where ss = explode s
-                              ts = explode t
+naive = { levenshtein
+        }
+        where levenshtein : String -> String -> Num
+              ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)
+                              _ 0 -> i
+                              0 _ -> j
+                              _ _ -> foldl1 min [ del, ins, subst ]
+                                     where del   = dist (i - 1) j       + 1
+                                           ins   = dist i       (j - 1) + 1
+                                           subst = dist (i - 1) (j - 1) + cost
+                                           cost  = if nth ss i == nth ts j
+                                                      then 0
+                                                      else 1
+                            where ss = explode s
+                                  ts = explode t
 
-effects = module
-            levenshtein : String -> String -> Num
-            ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)(synth !! cache >+> (i, j))
-                            _ _ (Just r) -> r
-                            _ 0 _        -> return i j i
-                            0 _ _        -> return i j j
-                            _ _ _        -> return i j <| foldl1 min [ del, ins, subst ]
-                                            where del   = dist (i - 1) j       + 1
-                                                  ins   = dist i       (j - 1) + 1
-                                                  subst = dist (i - 1) (j - 1) + cost
-                                                  cost  = if nth ss i == nth ts j
-                                                             then 0
-                                                             else 1
-                          where cache        = ref <>
-                                ss           = explode s
-                                ts           = explode t
-                                return i j r = cache := !! cache <+> (i, j) |-> r
-                                               r
+effects = { levenshtein
+          }
+          where levenshtein : String -> String -> Num
+                ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)(synth !! cache >+> (i, j))
+                                _ _ (Just r) -> r
+                                _ 0 _        -> return i j i
+                                0 _ _        -> return i j j
+                                _ _ _        -> return i j <| foldl1 min [ del, ins, subst ]
+                                                where del   = dist (i - 1) j       + 1
+                                                      ins   = dist i       (j - 1) + 1
+                                                      subst = dist (i - 1) (j - 1) + cost
+                                                      cost  = if nth ss i == nth ts j
+                                                                 then 0
+                                                                 else 1
+                              where cache        = ref <>
+                                    ss           = explode s
+                                    ts           = explode t
+                                    return i j r = cache := !! cache <+> (i, j) |-> r
+                                                   r
 
-state-passing = module
-                  levenshtein : String -> String -> Num
-                  ... s t     = | 1of2 | fun dist -> (cache -> <>){i -> stringLength s}{j -> stringLength t}{synth cache >+> (i, j)}
-                                |      |   _ _ (Just r) -> (r, cache)
-                                |      |   _ 0 _        -> (i, cache <+> (i, j) |-> i)
-                                |      |   0 _ _        -> (j, cache <+> (i, j) |-> j)
-                                |      |   _ _ _        -> (res, cache3 <+> (i, j) |-> res)
-                                |      |                   where res             = foldl1 min [ del, ins, subst ]
-                                |      |                         (del,   cache1) = first (_ + 1)    <| dist cache  (i - 1) j
-                                |      |                         (ins,   cache2) = first (_ + 1)    <| dist cache1 i       (j - 1)
-                                |      |                         (subst, cache3) = first (_ + cost) <| dist cache2 (i - 1) (j - 1)
-                                |      |                         cost            = if nth ss i == nth ts j
-                                |      |                                              then 0
-                                |      |                                              else 1
-                                |      | where ss = explode s
-                                |      |       ts = explode t
+state-passing = { levenshtein
+                }
+                where levenshtein : String -> String -> Num
+                      ... s t     = | 1of2 | fun dist -> (cache -> <>){i -> stringLength s}{j -> stringLength t}{synth cache >+> (i, j)}
+                                    |      |   _ _ (Just r) -> (r, cache)
+                                    |      |   _ 0 _        -> (i, cache <+> (i, j) |-> i)
+                                    |      |   0 _ _        -> (j, cache <+> (i, j) |-> j)
+                                    |      |   _ _ _        -> (res, cache3 <+> (i, j) |-> res)
+                                    |      |                   where res             = foldl1 min [ del, ins, subst ]
+                                    |      |                         (del,   cache1) = first (_ + 1)    <| dist cache  (i - 1) j
+                                    |      |                         (ins,   cache2) = first (_ + 1)    <| dist cache1 i       (j - 1)
+                                    |      |                         (subst, cache3) = first (_ + cost) <| dist cache2 (i - 1) (j - 1)
+                                    |      |                         cost            = if nth ss i == nth ts j
+                                    |      |                                              then 0
+                                    |      |                                              else 1
+                                    |      | where ss = explode s
+                                    |      |       ts = explode t
 
 _ = iter (mixfix _ @ 50) [ "_ >>= _",
                           "_ ==> _"
@@ -80,39 +83,40 @@ _ = iter (mixfix _ @ 50) [ "_ >>= _",
 typedef St    = Map (Num, Num) Num
 typedef StM a = St -> (a, St)
 
-monad = module exports levenshtein
-          return         : a -> StM a
-          ...            = pair
+monad = { levenshtein
+        }
+        where return         : a -> StM a
+              ...            = pair
 
-          ==>            : StM a -> (a -> b) -> StM b
-          ... f g        = f >>= (g >> return)
+              ==>            : StM a -> (a -> b) -> StM b
+              ... f g        = f >>= (g >> return)
 
-          >>=            : StM a -> (a -> StM b) -> StM b
-          ... f g st     = f st |> uncurry2 g
+              >>=            : StM a -> (a -> StM b) -> StM b
+              ... f g st     = f st |> uncurry2 g
 
-          returnAndCache : Num -> Num -> Num -> StM Num
-          ... i j res st = (res, st <+> (i, j) |-> res)
+              returnAndCache : Num -> Num -> Num -> StM Num
+              ... i j res st = (res, st <+> (i, j) |-> res)
 
-          consultCache   : Num -> Num -> StM (Maybe Num)
-          ... i j st     = (st >+> (i, j), st)
+              consultCache   : Num -> Num -> StM (Maybe Num)
+              ... i j st     = (st >+> (i, j), st)
 
-          run            : StM a -> a
-          ...            = (apply _ <>) >> fst
+              run            : StM a -> a
+              ...            = (apply _ <>) >> fst
 
-          levenshtein    : String -> String -> Num
-          ... s t        = run <| dist (stringLength s) (stringLength t)
-                           where dist    : Num -> Num -> StM Num
-                                 ... i j = | consultCache i j >>= _ | fun
-                                           |                        |   Just r  -> return r
-                                           |                        |   Nothing -> case (i, j)
-                                           |                        |                (_, 0) -> returnAndCache i j i
-                                           |                        |                (0, _) -> returnAndCache i j j
-                                           |                        |                _      -> dist (i - 1) j       ==> (_ + 1)    >>= (\ del   ->
-                                           |                        |                          dist i       (j - 1) ==> (_ + 1)    >>= (\ ins   ->
-                                           |                        |                          dist (i - 1) (j - 1) ==> (_ + cost) >>= (\ subst ->
-                                           |                        |                          returnAndCache i j <| foldl1 min [ del, ins, subst ])))
-                                           |                        |                          where cost = if nth ss i == nth ts j
-                                           |                        |                                          then 0
-                                           |                        |                                          else 1
-                                 ss      = explode s
-                                 ts      = explode t
+              levenshtein    : String -> String -> Num
+              ... s t        = run <| dist (stringLength s) (stringLength t)
+                               where dist    : Num -> Num -> StM Num
+                                     ... i j = | consultCache i j >>= _ | fun
+                                               |                        |   Just r  -> return r
+                                               |                        |   Nothing -> case (i, j)
+                                               |                        |                (_, 0) -> returnAndCache i j i
+                                               |                        |                (0, _) -> returnAndCache i j j
+                                               |                        |                _      -> dist (i - 1) j       ==> (_ + 1)    >>= (\ del   ->
+                                               |                        |                          dist i       (j - 1) ==> (_ + 1)    >>= (\ ins   ->
+                                               |                        |                          dist (i - 1) (j - 1) ==> (_ + cost) >>= (\ subst ->
+                                               |                        |                          returnAndCache i j <| foldl1 min [ del, ins, subst ])))
+                                               |                        |                          where cost = if nth ss i == nth ts j
+                                               |                        |                                          then 0
+                                               |                        |                                          else 1
+                                     ss      = explode s
+                                     ts      = explode t
