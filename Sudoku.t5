@@ -49,7 +49,11 @@ nums : [ Num ]
 ...  = range 1 9
 
 allPos : [ Position ]
-...    = nums |> map (Position >> (map _ nums)) >> concat
+...    = nums |>
+           map (Position >>
+                  (map _ nums)
+               ) >>
+           concat
 
 
 
@@ -75,8 +79,13 @@ showNum : Num -> String
 ...     = showProperFraction
 
 showValue       : Value -> String
-... (Known n)   = [ n ] |> Choice >> showValue
-... (Choice ns) = nums |> map showOne >> implode >> around "[ " " ]"
+... (Known n)   = [ n ] |>
+                    Choice >>
+                    showValue
+... (Choice ns) = nums |>
+                    map showOne >>
+                    implode >>
+                    around "[ " " ]"
                   where showOne n = if n `elem` ns
                                        then showNum n
                                        else " "
@@ -234,12 +243,14 @@ verbose : Bool
 -- ========== Relaxation Steps ========== --
 
 knowns : [ Value ] -> [ Num ]
-...    = map get >> concat
+...    = map get >>
+           concat
          where get (Known x) = [ x ]
                ... _         = []
 
 unknowns : [ Value ] -> [ Num ]
-...      = concatMap get >> nub
+...      = concatMap get >>
+             nub
            where get (Choice xs) = xs
                  ... _           = []
 
@@ -255,13 +266,19 @@ relaxNeg : Square -> Position -> Maybe Value
                                             failM
                             [ n ]        -> header
                                             printEndline <| " => <" # showNum n # ">"
-                                            n |> Known >> returnM
+                                            n |>
+                                              Known >>
+                                              returnM
                             Choice \ res -> if v =/= res
                                                then header
                                                     printEndline <| " => " # showValue res
                                             returnM res
              n         -> returnM n
-           where usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |> alphaMap p >> alphaMap sq >> concat >> knowns
+           where usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |>
+                                  alphaMap p >>
+                                  alphaMap sq >>
+                                  concat >>
+                                  knowns
                  v            = getVal sq p
                  printEndline = verbose => printEndline ; ignore
 
@@ -276,7 +293,9 @@ relaxPos : Square -> Position -> Maybe Value
                           relaxCol ns1 >>=M (\ ns2 ->
                           relaxSq ns2  >>=M postProc))
                           where postProc = fun
-                                             [ n ] -> n |> Known >> returnM
+                                             [ n ] -> n |>
+                                                        Known >>
+                                                        returnM
                                              _     -> returnM v
              n         -> returnM n
            where relaxRow               = relaxGen getRowFor
@@ -307,7 +326,11 @@ relaxIter : Square -> Maybe Square
                                      _            -> f sq p >>=M (\ v' ->
                                                      returnM (p, v'))
                   relaxPass f sq = mapM (relax f sq) allPos
-                  update sq      = foldl (setVal >> uncurry2) sq >> returnM
+                  update sq      = foldl (setVal >>
+                                            uncurry2
+                                         )
+                                         sq >>
+                                     returnM
 
 -- Perform relaxations iteratively until a fixed point is
 -- reached. (Since we're printing our 'uncertainty' metric
@@ -318,7 +341,9 @@ relax  : Square -> Maybe Square
             else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
                  relaxIter sq >>=M (\ sq' ->
                  | printEndline <| "After relaxation:"
-                 | sq' |> showSquare >> printEndline
+                 | sq' |>
+                 |   showSquare >>
+                 |   printEndline
                  | if sq' == sq
                  |    then printEndline "Done relaxing."
                  |         returnM sq
@@ -330,7 +355,10 @@ relax  : Square -> Maybe Square
 -- a minimal number of possibilities. (We don't really need
 -- to do the full sort, of course.)
 findChoice : Square -> Maybe (Position, [ Num ])
-... sq     = case allPos |> map get >> concat >> sortByLength
+... sq     = case allPos |>
+                    map get >>
+                    concat >>
+                    sortByLength
                c :: _ -> returnM c
                []     -> failM
              where get p           = case getVal sq p
@@ -338,7 +366,8 @@ findChoice : Square -> Maybe (Position, [ Num ])
                                        Choice ns -> [ (p, ns) ]
                    sortByLength    = sortBy lengthSnd
                    lengthSnd t1 t2 = fetch t1 < fetch t2
-                                     where fetch = 2of2 >> length
+                                     where fetch = 2of2 >>
+                                                     length
 
 -- Solve by:
 -- perform a fixed-point relaxation step
@@ -380,13 +409,21 @@ typedef SquareSpec = [ [ Value ] ]
 
 -- and a conversion.
 buildSquare : SquareSpec -> Square
-...         = zipWith buildRow nums >> concat >> foldl (setVal >> uncurry2) defaultSquare
+...         = zipWith buildRow nums >>
+                concat >>
+                foldl (setVal >>
+                       uncurry2
+                      )
+                      defaultSquare
               where buildRow r vs = zip (map (Position r) nums) vs
 
 -- Build up a list of rows of values, then convert to our
 -- internal function-based representation.
 parse : [ String ] -> Square
-...   = map (explode >> map parseChar) >> buildSquare
+...   = map (explode >>
+               map parseChar
+            ) >>
+          buildSquare
         where parseChar "_" = ??
               ...       c   = k (read c : Num)
 
@@ -604,10 +641,17 @@ main  : () -> ()
         where solvePuzzle (name, sq) = printEndline <| "========== Considering Puzzle `" # name # "` =========="
                                        printEndline newline
                                        case sq |> parse >> solve
-                                         Just sol -> sol |> check >> showSolution >> printEndline
+                                         Just sol -> sol |>
+                                                       check >>
+                                                       showSolution >>
+                                                       printEndline
                                          Nothing  -> error "It didn't produce any solution!"
-                                       "" |> replicate 3 >> iter printEndline
+                                       "" |>
+                                         replicate 3 >>
+                                         iter printEndline
               check sq               = if correctSolution? sq
                                           then sq
                                           else error "It's not correct!"
-              error                  = ("Bad news!" # _) >> uppercase >> fail
+              error                  = ("Bad news!" # _) >>
+                                         uppercase >>
+                                         fail

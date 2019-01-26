@@ -61,7 +61,7 @@ choose cs = (m, cs')
 -- which *is* generable by the algorithm: `F2 U L R' F2 L'
 -- R U2 L R' F2 L' R U2 L R' F2 L' R U F2`; it's likely that
 -- there's a shorter reducible sequence.)
-seq = fun loop {n}(res -> [])(cs -> ms)
+seq = fun loop {n} (res -> []) (cs -> ms)
         0 -> res
         _ -> loop (n - 1) (m :: res) cs'
              where (m, cs') = choose cs

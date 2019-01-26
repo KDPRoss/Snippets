@@ -31,7 +31,7 @@ _ = from "Prelude.Extended.lib.t5"
 -- Convert an undirected graph (represented as a list of
 -- edges) to a list of connected components.
 to-components : [ (a, a) ] -> [ [ a ] ]
-... es        = fun loop (unseen -> nodes)(res -> [])(cur -> <s>){_ -> []}
+... es        = fun loop (unseen -> nodes) (res -> []) (cur -> <s>) {_ -> []}
                   [] when emptyS cur and emptyS unseen -> map from-set res
                   [] when emptyS cur                   -> loop unseen        res          <s>        [ unseen |> sChoose >> 2of2 ]
                   []                                   -> loop unseen        (cur :: res) <s>        []
@@ -40,6 +40,10 @@ to-components : [ (a, a) ] -> [ [ a ] ]
                                                                         Just ns' -> ns ++ map 2of2 ns'
                                                                         Nothing  -> ns
                   _ :: ns                              -> loop unseen res cur ns
-                where nodes    = es |> unzip >> uncurry2 (++) >> make-set
+                where nodes    = es |>
+                                   unzip >>
+                                   uncurry2 (++) >>
+                                   make-set
                       children = es ++ map swap es |> groupBy 1of2
-                      emptyS   = sCard >> (0 == _)
+                      emptyS   = sCard >>
+                                   (0 == _)

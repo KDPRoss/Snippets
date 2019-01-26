@@ -25,7 +25,7 @@ PRAGMA Library "Demo.Levenshtein"
 naive = { levenshtein
         }
         where levenshtein : String -> String -> Num
-              ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)
+              ... s t     = fun dist -> (i -> stringLength s) (j -> stringLength t)
                               _ 0 -> i
                               0 _ -> j
                               _ _ -> foldl1 min [ del, ins, subst ]
@@ -41,7 +41,7 @@ naive = { levenshtein
 effects = { levenshtein
           }
           where levenshtein : String -> String -> Num
-                ... s t     = fun dist -> (i -> stringLength s)(j -> stringLength t)(synth !! cache >+> (i, j))
+                ... s t     = fun dist -> (i -> stringLength s) (j -> stringLength t) (synth !! cache >+> (i, j))
                                 _ _ (Just r) -> r
                                 _ 0 _        -> return i j i
                                 0 _ _        -> return i j j
@@ -61,7 +61,7 @@ effects = { levenshtein
 state-passing = { levenshtein
                 }
                 where levenshtein : String -> String -> Num
-                      ... s t     = | 1of2 | fun dist -> (cache -> <>){i -> stringLength s}{j -> stringLength t}{synth cache >+> (i, j)}
+                      ... s t     = | 1of2 | fun dist -> (cache -> <>) {i -> stringLength s} {j -> stringLength t} {synth cache >+> (i, j)}
                                     |      |   _ _ (Just r) -> (r, cache)
                                     |      |   _ 0 _        -> (i, cache <+> (i, j) |-> i)
                                     |      |   0 _ _        -> (j, cache <+> (i, j) |-> j)

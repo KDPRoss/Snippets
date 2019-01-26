@@ -60,7 +60,7 @@ factorialRef x = let loop = if !! i <= x
 -- Idiomatic Tanager programmer
 
 factorialTanager : Num -> Num
-...              = fun f (acc -> 1){}
+...              = fun f (acc -> 1) {}
                      0 -> acc
                      n -> f (n * acc) (n - 1)
 
@@ -69,7 +69,7 @@ factorialTanager : Num -> Num
 -- Ultrasafe clever Tanagerer
 
 factorialSafe : Num -> Num
-...           = fun f (acc -> 1){}
+...           = fun f (acc -> 1) {}
                   <(_ < 0)> -> ~
                   0         -> acc
                   n         -> n |> ,2 >> ,((_ * acc), (_ - 1)) >> uncurry2 f
@@ -102,7 +102,6 @@ idMonad = { return,
           }
           where return : a -> a
                 ...    = id
-
                 >>=    : a -> (a -> b) -> b
                 ...    = flip apply
 
@@ -116,7 +115,7 @@ factorialMonad = fun
 
 -- CPS'ed programmer
 
-factorialCPS = fun f {}(k -> id)
+factorialCPS = fun f {} (k -> id)
                  0 -> k 1
                  n -> f (n - 1) ((_ * n) >> k)
 
@@ -201,16 +200,13 @@ test = { testLoop,
                                                            ("factorialPeano", factorialPeanoHack)
                                                          ]
                                                          -- Check our definitions against the Prelude's.
-
              runPrint     : (String, Num -> Num) -> Num -> Num
              ... (l, f) n = printEndline <| "  " # l # " " # showProperFraction n # " => " # showProperFraction res
                             res
                             where res = f n
-
              agree        : Num -> Bool
              ...          = (alphaMap _ factorials) >> agreement
                             where agreement (x :: xs) = forall (_ == x) xs
-
              testLoop     : Num -> Bool
              ... n        = (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
                             -- Test 0 .. 7 (nice, small numbers) ... and some random
@@ -220,15 +216,12 @@ test = { testLoop,
                                                  then printEndline "FAILED!!!!!"
                                                       False
                                                  else True
-
              runTests     : () -> ()
              ... _        = case time (\ _ -> !! numTests |> testLoop)
                               (True, t) -> printEndline <| "All tests passed ... in " # showDecimal t # " seconds."
                               (_,    t) -> printEndline <| "Failure ... in " # showDecimal t # " seconds."
-
              numTests     : Ref Num
              ...          = ref 25
-
              maxI         : Num
              ...          = 500
 
