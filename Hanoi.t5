@@ -24,7 +24,10 @@ PRAGMA Library "Demo.TowersOfHanoi"
 
 
 
-_ = load "Prelude.Extended.lib.t5"
+_ = from "<Prelude.Extended>"
+      import [ "count",
+               "setNth"
+             ]
 
 
 

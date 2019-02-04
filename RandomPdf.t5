@@ -23,8 +23,8 @@ PRAGMA Library "Demo.RandomPDF"
 
 
 _ = iter load
-      [ "Prelude.Extended.lib.t5",
-        "System.Base.lib.t5"
+      [ "<Prelude.Extended>",
+        "<System.Base>"
       ]
 
 

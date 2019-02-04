@@ -22,7 +22,7 @@ PRAGMA Library "Demo.CubeScrambler"
 
 
 
-_ = from "Prelude.Extended.lib.t5"
+_ = from "<Prelude.Extended>"
       import [ "chunk"
              ]
 
