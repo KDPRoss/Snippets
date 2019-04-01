@@ -35,10 +35,10 @@ ms   = lr \_/ ud \_/ fb
 
 -- Enable both orthogonal axes for next move.
 next = fun
-         (lr ?s _) \ True -> ms \s lr
-         (ud ?s _) \ True -> ms \s ud
-         (fb ?s _) \ True -> ms \s fb
-         _                -> ~
+         <(lr ?s _)> -> ms \s lr
+         <(ud ?s _)> -> ms \s ud
+         <(fb ?s _)> -> ms \s fb
+         _           -> ~
 
 -- Fair choice; `sChoose` should probably do something like
 -- this!

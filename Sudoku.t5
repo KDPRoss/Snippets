@@ -5,7 +5,7 @@ PRAGMA Library "Demo.Sudoku"
 
 -- Sudoku Solver in Tanager.                          --
 --                                                    --
--- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright K.D.P.Ross <KDPRoss@gmail.com>           --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --
@@ -22,16 +22,12 @@ PRAGMA Library "Demo.Sudoku"
 
 
 
--- We're going to assume a standard 9x9 Sudoku. Would
--- be possible to abstract the alphabet, the size of the
--- square, and the constraints. Let's leave that for another
--- time. This implementation could be made significantly
--- more efficient (for instance, by keeping a list of
--- positions that require further relaxation), but I'm
--- faithfully representing the algorithm that I did by hand
--- the single time that I tried one of these puzzles (after
--- which I concluded that machines were better suited to
--- this sort of tedium).
+_ = from "<Prelude.Extended>"
+      import [ "cartesian",
+               "count",
+               "decompositionsSimp",
+               "minimumBy"
+             ]
 
 
 
@@ -42,18 +38,17 @@ new data Position = Position Num Num
 showPosition       : Position -> String
 ... (Position x y) = show (x, y)
 
--- Following Tanager convention, we'll address rows /
--- columns by `1 .. 9` (rather than using `0`-based
--- indexing); this is arbitrary.
 nums : [ Num ]
-...  = range 1 9
+...  = count 9
+
+subs : [ Position ]
+...  = cartesian nums' nums' |>
+         map (uncurry2 Position)
+       where nums' = [ 1, 4, 7 ]
 
 allPos : [ Position ]
-...    = nums |>
-           map (Position >>
-                  (map _ nums)
-               ) >>
-           concat
+...    = cartesian nums nums |>
+           map (uncurry2 Position)
 
 
 
@@ -65,30 +60,38 @@ allPos : [ Position ]
 -- that `Choice [ _ ]` is never constructed.
 
 new data Value = Known Num
-                 Choice [ Num ]
+                 Choice (Set Num)
 
--- These will be convenient for the common (fixed /
--- completely-unknown) cases.
+new data Work  = Row Num
+                 Col Num
+                 Sub Position
+
 ??  : Value
-... = Choice nums
-
-k   : Num -> Value
-... = Known
+... = nums |>
+        make-set >>
+        Choice
 
 showNum : Num -> String
 ...     = showProperFraction
 
 showValue       : Value -> String
-... (Known n)   = [ n ] |>
+... (Known n)   = <s> +s n |>
                     Choice >>
                     showValue
 ... (Choice ns) = nums |>
                     map showOne >>
                     implode >>
                     around "[ " " ]"
-                  where showOne n = if n `elem` ns
+                  where showOne n = if ns ?s n
                                        then showNum n
                                        else " "
+
+known? : Value -> Bool
+...    = (_ matches Known...)
+
+one? : Set Num -> Bool
+...  = sCard >>
+         (1 == _)
 
 
 
@@ -101,6 +104,8 @@ showValue       : Value -> String
 
 new data Square = Square (Map Position Value)
 
+typedef Chunk   = [ Value ]
+
 -- Because of our definition of `getVal`, wrapping an empty
 -- `Map` will work.
 defaultSquare : Square
@@ -109,52 +114,90 @@ defaultSquare : Square
 getVal           : Square -> Position -> Value
 ... (Square f) p = case f >+> p
                      Just v  -> v
-                     Nothing -> Choice nums
+                     Nothing -> ??
 
 setVal             : Square -> Position -> Value -> Square
-... (Square f) p v = Square <| f <+> p |-> v
+... (Square f) p v = Square (f <+> p |-> v')
+                     where v' = case v
+                                  Choice (<(one?)> & ns) -> ns |>
+                                                              sChoose >>
+                                                              2of2 >>
+                                                              Known
+                                  _                      -> v
 
-getRow   : Square -> Num -> [ Value ]
-... sq r = map (Position r >> getVal sq) nums
+getRow   : Square -> Num -> Chunk
+... sq r = nums |>
+             map (Position r >>
+                    getVal sq
+                 )
 
-getCol   : Square -> Num -> [ Value ]
-... sq c = map ((Position _ c) >> getVal sq) nums
+setRow      : Square -> Num -> Chunk -> Square
+... sq r vs = zip vs nums |>
+                foldl one sq
+              where one sq (v, c) = setVal sq (Position r c) v
 
-getRowFor             : Position -> Square -> [ Value ]
-... (Position r c) sq = nums |> filter (_ =/= c) >> map (Position r >> getVal sq)
+getCol   : Square -> Num -> Chunk
+... sq c = nums |>
+             map ((Position _ c) >>
+                    getVal sq
+                 )
 
-getColFor             : Position -> Square -> [ Value ]
-... (Position r c) sq = nums |> filter (_ =/= r) >> map ((Position _ c) >> getVal sq)
+setCol      : Square -> Num -> Chunk -> Square
+... sq c vs = zip vs nums |>
+                foldl one sq
+              where one sq (v, r) = setVal sq (Position r c) v
 
--- We'll need to be able to get the 9 squares for the 3x3
--- subsquare to which some position belongs; sometimes, we
--- want to include that position, but not always.
-getThreeByThreeForGen         : Bool -> Position -> Square -> [ Value ]
-... include (Position r c) sq = concatMap getVal' ps
-                                where ps      = concatMap ((r' + _) >> (\ q -> map ((c' + _) >> Position q) offsets)) offsets
-                                      offsets = range 0 2
-                                      r'      = r - (r - 1) mod 3
-                                      c'      = c - (c - 1) mod 3
-                                      getVal' = fun
-                                                  Position `r `c when not include -> []
-                                                  p                               ->  [ getVal sq p ]
+canonicalSub       : Position -> Position
+... (Position r c) = Position (adj r) (adj c)
+                     where adj x = x - (x - 1) mod 3 + 1
 
-getThreeByThreeFor : Position -> Square -> [ Value ]
-...                = getThreeByThreeForGen True
+possForSub          : Position -> [ Position ]
+... (Position r c)  = cartesian offsets offsets |>
+                        map p
+                      where offsets    = range 0 2
+                            r'         = r - (r - 1) mod 3
+                            c'         = c - (c - 1) mod 3
+                            p (dr, dc) = Position (r' + dr) (c' + dc)
 
-getThreeByThreeForExcept : Position -> Square -> [ Value ]
-...                      = getThreeByThreeForGen False
+getSub   : Square -> Position -> Chunk
+... sq p = p |>
+             possForSub >>
+             map (getVal sq)
+
+setSub      : Square -> Position -> Chunk -> Square
+... sq p vs = zip ps vs |>
+                foldl one sq
+              where one sq = uncurry2 (setVal sq)
+                    ps     = possForSub p
 
 showSquare : Square -> String
-... sq     = nums |> map showRow >> intersperse newline >> implode
-             where showRow r = nums |> map (Position r >> getVal sq >> showValue) >> intersperse " " >> implode
+... sq     = nums |>
+               map showRow >>
+               intersperse newline >>
+               implode
+             where showRow r = nums |>
+                                 map (Position r >>
+                                        getVal sq >>
+                                        showValue
+                                     ) >>
+                                 intersperse " " >>
+                                 implode
 
 -- A bit more compact.
 showSolution : Square -> String
-... sq       = nums |> map showRow >> intersperse newline >> implode
-               where showRow r           = nums |> map (Position r >> getVal sq >> showValue) >> implode
+... sq       = nums |>
+                 map showRow >>
+                 intersperse newline >>
+                 implode
+               where showRow r           = nums |>
+                                             map (Position r >>
+                                                    getVal sq >>
+                                                    showValue
+                                                 ) >>
+                                             implode
                      showValue (Known x) = showNum x
                      ...       _         = " "
+
 
 
 -- ========== Validator ========== --
@@ -164,9 +207,16 @@ showSolution : Square -> String
 
 -- Are there no unknown values?
 concrete? : Square -> Bool
-... sq    = allPos |> map (getVal sq) >> forall isKnown
-            where isKnown Known... = True
-                  ...     _        = False
+... sq    = allPos |>
+              map (getVal sq) >>
+              forall known?
+
+contradict? : Square -> Bool
+... sq      = allPos |>
+                exists (getVal sq >>
+                          overconstrained?
+                       )
+              where overconstrained? = (_ matches Choice `<s>)
 
 -- Given that `concrete? sq`, do the all-known values form
 -- a valid Sudoku solution? (N.B., we *are* assuming that
@@ -176,14 +226,24 @@ concrete? : Square -> Bool
 -- way.)
 solution? : Square -> Bool
 ... sq    = checkRows and checkCols and checkSubs
-            where checkRows         = checkGen getRow
-                  checkCols         = checkGen getCol
-                  checkSubs         = subs |> map ((getThreeByThreeFor _ sq) >> map extract) >> good
-                  subs              = concatMap (\ r -> map (Position r) nums') nums'
-                                      where nums' = [ 1, 4, 7 ]
-                  checkGen f        = nums |> map (f sq >> map extract) >> good
-                  good              = forall (sort >> (nums == _))
-                  extract (Known n) = n
+            where checkRows          = nums |>
+                                         forall (getRow sq >>
+                                                   checkGen
+                                                )
+                  checkCols          = nums |>
+                                         forall (getCol sq >>
+                                                   checkGen
+                                                )
+                  checkSubs          = subs |>
+                                         forall (getSub sq >>
+                                                   checkGen
+                                                )
+                  checkGen           = map extract >>
+                                         good
+                  good               = sort >>
+                                         (nums == _)
+                  extract (Known n)  = n
+                  ...     (Choice _) = 0
 
 -- Just for completeness:
 correctSolution? : Square -> Bool
@@ -194,9 +254,13 @@ correctSolution? : Square -> Bool
 -- have to consider -- the product of the counts of unknown
 -- values.
 uncertainty : Square -> Num
-... sq      = allPos |> map (getVal sq) >> map one >> product
-              where one (Choice ns) = length ns
-                    ... _           = 1
+... sq      = allPos |>
+                map (getVal sq >>
+                       one
+                    ) >>
+                product
+              where one (Choice ns) = sCard ns
+                    ... (Known _)   = 1
 
 
 
@@ -206,194 +270,181 @@ uncertainty : Square -> Num
 -- the `Maybe` monad; we could, of course, just import the
 -- relevant module from the `Monads` library.
 
-returnMaybe : a -> Maybe a
-...         = Just
+-- Some nicer syntax.
+_ = level 25 is Left
+    mixfix "_ >>= _" @ 25
 
-bindMaybe      : Maybe a -> (a -> Maybe b) -> Maybe b
+return : a -> Maybe a
+...    = Just
+
+>>=            : Maybe a -> (a -> Maybe b) -> Maybe b
 ... (Just x) f = f x
 ... Nothing  _ = Nothing
 
-failMaybe : Maybe a
-...       = Nothing
-
--- Some nicer syntax.
-_ = level 25 is Left
-    mixfix "_ >>=M _" @ 25
-
->>=M    = bindMaybe
-returnM = returnMaybe
-failM   = failMaybe
+failM : Maybe a
+...   = Nothing
 
 mapM : (a -> Maybe b) -> [ a ] -> Maybe [ b ]
-...  = fun loop f -> {}
-         []      -> returnM []
-         x :: xs -> f x     >>=M (\ x'  ->
-                    loop xs >>=M (\ xs' ->
-                    returnM <| x' :: xs'))
+...  = fun loop f -> _
+         []      -> return []
+         x :: xs -> f x     >>= (\ x'  ->
+                    loop xs >>= (\ xs' ->
+                    return <| x' :: xs'))
 
 
 
 -- ========== Debugging / Verbosity ========== --
 
 verbose : Bool
-...     = False
+...     = True
 
 
 
 -- ========== Relaxation Steps ========== --
 
 knowns : [ Value ] -> [ Num ]
-...    = map get >>
-           concat
+...    = concatMap get
          where get (Known x) = [ x ]
                ... _         = []
 
-unknowns : [ Value ] -> [ Num ]
-...      = concatMap get >>
-             nub
-           where get (Choice xs) = xs
-                 ... _           = []
+fetch           : Value -> [ Num ]
+... (Choice xs) = from-set xs
+... (Known x)   = [ x ]
 
--- Remove values that are 'taken' by another position in the
--- relevant row, column, 3x3 subsquare. ('Negative' because
--- we're reasoning about what the value *mustn't* be.)
-relaxNeg : Square -> Position -> Maybe Value
-... sq p = case v
-             Choice ns -> let lazy header = printEndline <| "relax-(" # showPosition p # "->" # showValue v # ") with usedUp = " # showValue (Choice usedUp)
-                          case filter ((_ `elem` usedUp) >> not) ns
-                            []           -> header
-                                            printEndline <| "Failed to relax- " # showPosition p # " -> " # showValue v # "."
-                                            failM
-                            [ n ]        -> header
-                                            printEndline <| " => <" # showNum n # ">"
-                                            n |>
-                                              Known >>
-                                              returnM
-                            Choice \ res -> if v =/= res
-                                               then header
-                                                    printEndline <| " => " # showValue res
-                                            returnM res
-             n         -> returnM n
-           where usedUp       = [ getRowFor, getColFor, getThreeByThreeForExcept ] |>
-                                  alphaMap p >>
-                                  alphaMap sq >>
-                                  concat >>
-                                  knowns
-                 v            = getVal sq p
-                 printEndline = verbose => printEndline ; ignore
+relaxNeg : Chunk -> (Chunk, Set Num)
+... vs   = (res, !! deltas)
+           where res                  = zipWith adj vs nums
+                 used                 = vs |>
+                                          knowns >>
+                                          make-set
+                 adj (Choice xs)   i  = if xs' =/= xs
+                                           then deltas := !! deltas +s i
+                                        Choice xs'
+                                        where xs' = xs \s used
+                 ... (Known... & v) _ = v
+                 deltas               = ref <s>
 
--- If no other position in the relevant row, column, or 3x3
--- subsquare can take a value, then this one must take it.
--- ('Positive' because we're reasoning about what the value
--- *must* be.) Here, we must consider each substructure
--- separately.
-relaxPos : Square -> Position -> Maybe Value
-... sq p = case v
-             Choice ns -> relaxRow ns  >>=M (\ ns1 ->
-                          relaxCol ns1 >>=M (\ ns2 ->
-                          relaxSq ns2  >>=M postProc))
-                          where postProc = fun
-                                             [ n ] -> n |>
-                                                        Known >>
-                                                        returnM
-                                             _     -> returnM v
-             n         -> returnM n
-           where relaxRow               = relaxGen getRowFor
-                 relaxCol               = relaxGen getColFor
-                 relaxSq                = relaxGen getThreeByThreeForExcept
-                 relaxGen _ ([ _ ] & n) = returnM n
-                 ...      f ns          = case filter ((_ `elem` used) >> not) ns
-                                            [ n ] & ns' -> printEndline <| "relax+(" # showPosition p # "->" # showValue (Choice ns) # ") with used = " # showValue (Choice used)
-                                                           printEndline <| " => <" # showNum n # ">"
-                                                           returnM ns'
-                                            n           -> returnM n
-                                          where vs   = f p sq
-                                                used = unknowns vs ++ knowns vs |> nub
-                 v                      = getVal sq p
-                 printEndline           = verbose => printEndline ; ignore
+relaxPos : Chunk -> (Chunk, Set Num)
+... vs   = (res, !! deltas)
+           where res                       = vs |>
+                                               decompositionsSimp >>
+                                               (zipWith adj _ nums)
+                 adj (Choice xs & v, vs) i = case xs \s possible
+                                               <(one?)> & xs' -> deltas := !! deltas +s i
+                                                                 xs' |>
+                                                                   sChoose >>
+                                                                   2of2 >>
+                                                                   Known
+                                               _              -> v
+                                             where possible = vs |>
+                                                                concatMap fetch >>
+                                                                make-set
+                 ... (Known... & v,  _)  _ = v
+                 deltas                    = ref <s>
 
--- There are all sorts of optimisations that we could
--- consider: Among them, for instance, *not* setting a
--- position to the value that it already has! Efficiency,
--- however, isn't the point of this implementation ;~}
-relaxIter : Square -> Maybe Square
-... sq    = relaxPass relaxNeg sq  >>=M (\ rs  ->
-            update sq rs           >>=M (\ sq' ->
-            relaxPass relaxPos sq' >>=M (\ rs' ->
-            update sq' rs')))
-            where relax f sq p   = case getVal sq p
-                                     Known... & v -> returnM (p, v)
-                                     _            -> f sq p >>=M (\ v' ->
-                                                     returnM (p, v'))
-                  relaxPass f sq = mapM (relax f sq) allPos
-                  update sq      = foldl (setVal >>
-                                            uncurry2
-                                         )
-                                         sq >>
-                                     returnM
+relaxChunk : Chunk -> (Chunk, Set Num)
+...        = fun loop (deltas -> <s>) {}
+               c -> if c == c''
+                       then (c, deltas)
+                       else loop (deltas \_/ ds \_/ ds') c''
+                    where (c',  ds)  = relaxNeg c
+                          (c'', ds') = relaxPos c'
+
+relaxLoop : Square -> Set Work -> Square
+... sq    = fun
+              `<s> -> sq
+              w    -> case task
+                        Row r -> handle (getRow sq r) (setRow sq r) genW
+                                 where genW = concatMap gen >>
+                                                make-set
+                                              where gen c = [ Col c, Sub (canonicalSub <| Position r c) ]
+                        Col c -> handle (getCol sq c) (setCol sq c) genW
+                                 where genW = concatMap gen >>
+                                                make-set
+                                              where gen r = [ Row r, Sub (canonicalSub <| Position r c) ]
+                        Sub p -> handle (getSub sq p) (setSub sq p) genW
+                                 where genW is = ps' |>
+                                                   concatMap gen >>
+                                                   make-set
+                                                 where ps                 = possForSub p
+                                                       ps'                = map (ps `nth` _) is
+                                                       gen (Position r c) = [ Row r, Col c ]
+                      where (rest, task)        = sChoose w
+                            handle vs insr genW = case relaxChunk vs
+                                                    (_,   `<s>) -> relaxLoop sq rest
+                                                    (vs', ds)   -> relaxLoop sq' work
+                                                                   where work = rest \_/ genW is
+                                                                         sq'  = insr vs'
+                                                                         is   = from-set ds
+
+indentEndline : Num -> String -> ()
+... n s       = if verbose
+                   then printEndline <| pad # s
+                where pad = replicate n " " |> implode
 
 -- Perform relaxations iteratively until a fixed point is
 -- reached. (Since we're printing our 'uncertainty' metric
 -- anyhow, might well return early if this is `0`.)
-relax  : Square -> Maybe Square
-... sq = if 0 == unc
-            then returnM sq
-            else printEndline <| "Relaxing; uncertainty is " # showNum unc # " ..."
-                 relaxIter sq >>=M (\ sq' ->
-                 | printEndline <| "After relaxation:"
-                 | sq' |>
-                 |   showSquare >>
-                 |   printEndline
-                 | if sq' == sq
-                 |    then printEndline "Done relaxing."
-                 |         returnM sq
-                 |    else relax sq'
-                 )
-         where unc = uncertainty sq
+relax      : Num -> Square -> Set Work -> Square
+... i sq w = if 0 == unc
+                then sq
+                else indentEndline i <| "Relaxing; uncertainty is " # showNum unc # " ..."
+                     sq'
+             where unc = uncertainty sq
+                   sq' = relaxLoop sq w
 
 -- Assuming that we're stuck, choose some position that has
 -- a minimal number of possibilities. (We don't really need
 -- to do the full sort, of course.)
 findChoice : Square -> Maybe (Position, [ Num ])
-... sq     = case allPos |>
-                    map get >>
-                    concat >>
-                    sortByLength
-               c :: _ -> returnM c
-               []     -> failM
+... sq     = case concatMap get allPos
+               cs -> cs |>
+                       minimumBy lengthSnd >>
+                       return
+               [] -> failM
              where get p           = case getVal sq p
-                                       Known _   -> []
-                                       Choice ns -> [ (p, ns) ]
-                   sortByLength    = sortBy lengthSnd
+                                       Known...  -> []
+                                       Choice ns -> [ (p, from-set ns) ]
                    lengthSnd t1 t2 = fetch t1 < fetch t2
-                                     where fetch = 2of2 >>
-                                                     length
+                                     where fetch = 2of2 >> length
 
 -- Solve by:
 -- perform a fixed-point relaxation step
 -- if we're done
---    then check if we've a valid solution (we might not because of an erroneous assumption)
---    else let p be a position holding a smallest set of unknown values
+--    then check if we've a valid solution (we might not because
+--         of an erroneous assumption)
+--    else let p be a position holding a smallest set of unknown
+--                  values
 --         let ns be these values
---         try arbitrarily setting p := n for n in ns until one succeeds.
+--         try arbitrarily setting p := n for n in ns until one
+--         succeeds.
+solveLoop  : Num -> Square -> Set Work -> Maybe Square
+... i sq w = case sq'
+               <(concrete? and^ solution?)>  -> return sq'
+               <(concrete? or^ contradict?)> -> failM
+               _                             -> findChoice sq' >>=
+                                                  uncurry2 (tryChoices sq')
+             where sq'                       = relax i sq w
+                   tryChoices _  _ []        = indentEndline i "Exhausted choices."
+                                               failM
+                   ...        sq p (n :: ns) = indentEndline i <| "assuming(" # showPosition p # "->" # showValue (Choice (make-set <| n :: ns)) # ") is " # showNum n # "."
+                                               case solveLoop (i + 1) sq'' w'
+                                                 Nothing -> indentEndline i <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "."
+                                                            tryChoices sq p ns
+                                                 n       -> n
+                                               where sq''           = setVal sq p (Known n)
+                                                     w'             = make-set [ Row r, Col c, Sub (canonicalSub p) ]
+                                                     (Position r c) = p
+
 solve  : Square -> Maybe Square
-... sq = relax sq >>=M (\ sq' ->
-         | if concrete? sq'
-         |    then if solution? sq'
-         |            then returnM sq'
-         |            else printEndline "Solution check failed."
-         |                 failM
-         |    else findChoice sq' >>=M (\ (p, ns) ->
-         |         tryChoices sq' p ns)
-         )
-         where tryChoices _  _ []        = printEndline "Exhausted choices."
-                                           failM
-               ...        sq p (n :: ns) = printEndline <| "assuming(" # showPosition p # "->" # showValue (Choice <| n :: ns) # ") is " # showNum n # "."
-                                           case solve sq''
-                                             Nothing -> printEndline <| "Backtrack: " # showPosition p # " cannot be " # showNum n # "."
-                                                        tryChoices sq p ns
-                                             n       -> n
-                                           where sq'' = setVal sq p <| Known n
+... sq = solveLoop 0 sq allWork
+         where allWork = allPos |>
+                           filter (getVal sq >>
+                                     known?
+                                  ) >>
+                           map genWork >>
+                           foldl (\_/) <s>
+                         where genWork (Position r c & p) = make-set [ Row r, Col c, Sub (canonicalSub p) ]
 
 
 
@@ -412,9 +463,8 @@ buildSquare : SquareSpec -> Square
 ...         = zipWith buildRow nums >>
                 concat >>
                 foldl (setVal >>
-                       uncurry2
-                      )
-                      defaultSquare
+                         uncurry2
+                      ) defaultSquare
               where buildRow r vs = zip (map (Position r) nums) vs
 
 -- Build up a list of rows of values, then convert to our
@@ -425,7 +475,7 @@ parse : [ String ] -> Square
             ) >>
           buildSquare
         where parseChar "_" = ??
-              ...       c   = k (read c : Num)
+              ...       c   = Known (read c : Num)
 
 
 
@@ -640,7 +690,9 @@ main  : () -> ()
 ... _ = iter solvePuzzle puzzles
         where solvePuzzle (name, sq) = printEndline <| "========== Considering Puzzle `" # name # "` =========="
                                        printEndline newline
-                                       case sq |> parse >> solve
+                                       case sq |>
+                                              parse >>
+                                              solve
                                          Just sol -> sol |>
                                                        check >>
                                                        showSolution >>
