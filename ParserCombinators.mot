@@ -1,0 +1,290 @@
+#Motmot
+
+-- Parser combinators in Motmot based on those from      --
+-- ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) --
+--                                                       --
+-- Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         --
+--                                                       --
+-- This code is licensed only for study and personal     --
+-- enrichment.                                           --
+
+
+-- Relevant resources:
+-- - the original paper: tinyurl.com/sr5w7zp
+-- - Wikipedia article ‘Parser Combinators’: tinyurl.com/nw3epcy
+-- - Hutton talking about this on ‘Computerphile’: https://youtu.be/dDtZLm7HIJs
+
+
+-- /------------------------------------------\
+-- | ‘The raison  d'être  of a program  is to |
+-- | be  a  mathematically-elegant  object of |
+-- | sublime beauty; it's also pretty cool if |
+-- | it  occasionally   computes  something.’ |
+-- |                             - K.D.P.Ross |
+-- \------------------------------------------/
+
+
+
+-- ========== The Combinator Library ========== --
+
+typedef Letter        = String
+
+typedef Letters       = List Letter
+
+typedef Parser result = Letters -> List (result, Letters)
+
+
+-- ===== Primitive Parsers (§2.1) ===== --
+
+succeed : (result : *) => result -> Parser result =
+  (result : *) =>
+    (v : result) | (inp : Letters) ~ [ (v, inp) ]{ (result, Letters) }
+
+fail : (result : *) => Parser result =
+  (result : *) =>
+    (_ : Letters) ~ []{ (result, Letters) }
+
+satisfy : (Letter -> Bool) -> Parser Letter =
+  (p : Letter -> Bool) ~
+    case of
+    (Nil{ Letter }                            ~ []{ (Letter, Letters) })
+    (Cons ((x : Letter) & {p}) (xs : Letters) ~ succeed x xs)
+    (fail{Letter})
+
+literal : Letter -> Parser Letter =
+  (x : Letter) ~ satisfy (== x)
+
+
+-- ===== Combinators (§2.2) ===== --
+
+mixfix 100 _ || _
+
+-- `alt` from Hutton's implementation.
+
+|| : (a : *) => Parser a -> Parser a -> Parser a =
+  (a : *) =>
+    (p1 : Parser a) | (p2 : Parser a) ~
+      (inp : Letters) ~ p1 inp ++ p2 inp
+
+mixfix 110 _ <=> _
+
+-- `then` from Hutton's implementation; η-reduced.
+
+<=> : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b) =
+  (a : *) => (b : *) =>
+    (p1 : Parser a) | (p2 : Parser b) ~
+      p1 >>
+        concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
+                                                     p2 >>
+                                                     map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
+                   )
+
+mixfix 80 _ >>> _
+
+
+-- ===== Manipulating Values (§2.3) ===== --
+
+-- `using` from Hutton's implementation.
+
+>>> : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b =
+  (a : *) => (b : *) =>
+    (p : Parser a) | (f : a -> b) ~
+      p >> map ((first{ Letters }) f)
+
+many : (a : *) => Parser a -> Parser (List a) =
+  (a : *) =>
+    (p : Parser a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (Cons{ a })) || succeed (Nil{ a })
+
+some : (a : *) => Parser a -> Parser (List a) =
+  (a : *) =>
+    (p : Parser a) ~
+      p <=> many p >>> uncurry (Cons{ a })
+
+number : Parser String =
+  let (digit : String -> Bool) =
+        (=< $0$) and^ (flip ((=<){ String }) $9$)
+  in some (satisfy digit) >>> implode
+
+word : Parser String =
+  let (letter : String -> Bool) =
+        lowercase >>
+          ((=< $a$) and^ (flip ((=<){ String }) $z$))
+  in some (satisfy letter) >>> implode
+
+string : String -> Parser String =
+  let (core : List String -> Parser String) =
+        (case of
+         (Nil{ String }                        ~ succeed $$)
+         (Cons (x : String) (xs : List String) ~ literal x <=> core xs >>> uncurry (#))
+        )
+  in explode >>
+       core
+
+mixfix 110 _ ==> _
+
+mixfix 110 _ <== _
+
+==> : (a : *) => (b : *) => Parser a -> Parser b -> Parser b =
+  (a : *) => (b : *) =>
+    (p1 : Parser a) | (p2 : Parser b) ~
+      p1 <=> p2 >>> (snd{ a, b })
+
+<== : (a : *) => (b : *) => Parser a -> Parser b -> Parser a =
+  (a : *) => (b : *) =>
+    (p1 : Parser a) | (p2 : Parser b) ~
+      p1 <=> p2 >>> (fst{ a, b })
+
+mixfix 80 _ return _
+
+return : (a : *) => (b : *) => Parser a -> b -> Parser b =
+  (a : *) => (b : *) =>
+    (p : Parser a) | (v : b) ~ p >>> (const{ a }) v
+
+
+
+-- ========== Example Expression Language (§2.4) ========== --
+
+-- ===== Expression Representation ===== --
+
+axiom Expr : *
+
+axiom Num  : Num -> Expr
+
+axiom Add  : Expr -> Expr -> Expr
+
+axiom Sub  : Expr -> Expr -> Expr
+
+axiom Mul  : Expr -> Expr -> Expr
+
+axiom Div  : Expr -> Expr -> Expr
+
+
+-- ===== Expression Parser ===== --
+
+-- The η-expansion is necessary here because we're of
+-- applicative-order (rather than lazy) evaluation; this
+-- stuff always looks better in Haskell (or Miranda)!
+
+-- Diverge a bit from the paper here to allow things like
+-- `$2+3+4$`; this was handled by Hutton's code in the
+-- video.
+
+expn : Parser Expr =
+  (term <== literal $+$ <=> ((inp : Letters) ~ expn inp) >>> plus) ||
+    ((inp : Letters) ~ (term <== literal $-$ <=> term >>> minus) inp) ||
+    ((inp : Letters) ~ term inp)
+
+term : Parser Expr =
+  (factor <== literal $*$ <=> ((inp : Letters) ~ term inp) >>> times) ||
+    ((inp : Letters) ~ (factor <== literal $/$ <=> factor >>> divide) inp) ||
+    ((inp : Letters) ~ factor inp)
+
+factor : Parser Expr =
+  (number >>> value) ||
+    ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
+
+value : String -> Expr        = (read{ Num }) >> Num
+
+plus : (Expr, Expr) -> Expr   = uncurry Add
+
+minus : (Expr, Expr) -> Expr  = uncurry Sub
+
+times : (Expr, Expr) -> Expr  = uncurry Mul
+
+divide : (Expr, Expr) -> Expr = uncurry Div
+
+
+-- ===== Evaluator ===== --
+
+-- Don't handle error cases (e.g., `_ / 0`).
+
+eval-expr : Expr -> Num =
+  case of
+  (Num (n : Num)              ~ n)
+  (Add (e : Expr) (e' : Expr) ~ eval-expr e + eval-expr e')
+  (Sub (e : Expr) (e' : Expr) ~ eval-expr e - eval-expr e')
+  (Mul (e : Expr) (e' : Expr) ~ eval-expr e * eval-expr e')
+  (Div (e : Expr) (e' : Expr) ~ eval-expr e / eval-expr e')
+
+
+-- ===== Interpreter ===== --
+
+read-eval-print : String -> Unit =
+  (s : String) ~
+    let strict (_ : Unit)       = print ($input:  `$ # s # $`.$)
+             | (e : Maybe Expr) = s |>
+                                    explode >>
+                                    wrap-parser-unique expn
+             | (_ : Unit)       = (case e of
+                                   (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
+                                                      (let (v : Num) = eval-expr e
+                                                       in print ($eval:   `$ # show v # $`.$)
+                                                      )
+                                   )
+                                   (Nothing{ Expr } ~ print $PARSE FAILURE!$)
+                                  )
+    in Unit
+
+wrap-parser : (a : *) => Parser a -> Letters -> List a =
+  (a : *) =>
+    (p : Parser a) ~
+      p >>
+        filter ((snd{ a, Letters }) >>
+                  (== (Nil{ Letter }))
+               ) >>
+        map (fst{ a, Letters })
+
+wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
+  (a : *) =>
+    (p : Parser a) | (inp : Letters) ~
+      case wrap-parser p inp of
+      (Cons (v : a) (Nil{ a }) ~ Just v)
+      ((_ : List a)            ~ Nothing{ a })
+
+-- ===== Examples ==== --
+
+-- These are the examples that Hutton shows in the
+-- ‘Computerphile’ video.
+
+-- (ins) :s> read-eval-print $2+3*4$
+--  in: `read-eval-print $2+3*4$`
+-- out: `read-eval-print $2+3*4$`
+-- has type: `Unit`
+-- PRINT input:  `2+3*4`.
+-- PRINT parsed: `Add (Num 2) (Mul (Num 3) (Num 4))`.
+-- PRINT eval:   `14`.
+-- linearised: Unit
+
+-- (ins) :s> read-eval-print $(2+3)*4$
+--  in: `read-eval-print $(2+3)*4$`
+-- out: `read-eval-print $(2+3)*4$`
+-- has type: `Unit`
+-- PRINT input:  `(2+3)*4`.
+-- PRINT parsed: `Mul (Add (Num 2) (Num 3)) (Num 4)`.
+-- PRINT eval:   `20`.
+-- linearised: Unit
+
+-- (ins) :s> read-eval-print $(2+(7*10)+8)*20$
+--  in: `read-eval-print $(2+(7*10)+8)*20$`
+-- out: `read-eval-print $(2+(7*10)+8)*20$`
+-- has type: `Unit`
+-- PRINT input:  `(2+(7*10)+8)*20`.
+-- PRINT parsed: `Mul (Add (Num 2) (Add (Mul (Num 7) (Num 10)) (Num 8))) (Num 20)`.
+-- PRINT eval:   `1600`.
+-- linearised: Unit
+
+-- (ins) :s> read-eval-print $2+3*$
+--  in: `read-eval-print $2+3*$`
+-- out: `read-eval-print $2+3*$`
+-- has type: `Unit`
+-- PRINT input:  `2+3*`.
+-- PRINT PARSE FAILURE!
+-- linearised: Unit
+
+-- (ins) :s> read-eval-print $(2+3$
+--  in: `read-eval-print $(2+3$`
+-- out: `read-eval-print $(2+3$`
+-- has type: `Unit`
+-- PRINT input:  `(2+3`.
+-- PRINT PARSE FAILURE!
+-- linearised: Unit
