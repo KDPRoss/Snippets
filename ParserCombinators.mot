@@ -79,10 +79,11 @@ mixfix 110 _ <=> _
                                                      map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
                    )
 
-mixfix 80 _ >>> _
 
 
 -- ===== Manipulating Values (§2.3) ===== --
+
+mixfix 80 _ >>> _
 
 -- `using` from Hutton's implementation.
 
@@ -122,12 +123,12 @@ string : String -> Parser String =
 
 mixfix 110 _ ==> _
 
-mixfix 110 _ <== _
-
 ==> : (a : *) => (b : *) => Parser a -> Parser b -> Parser b =
   (a : *) => (b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 <=> p2 >>> (snd{ a, b })
+
+mixfix 110 _ <== _
 
 <== : (a : *) => (b : *) => Parser a -> Parser b -> Parser a =
   (a : *) => (b : *) =>
@@ -240,6 +241,7 @@ wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
       case wrap-parser p inp of
       (Cons (v : a) (Nil{ a }) ~ Just v)
       ((_ : List a)            ~ Nothing{ a })
+
 
 -- ===== Examples ==== --
 
