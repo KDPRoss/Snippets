@@ -1,0 +1,84 @@
+#Motmot
+
+┌───────────────────────────────────────────────┐
+│ Sieve of Eratosthenes & Twin Primes in Motmot │
+│                                               │
+│ Based upon ‘Infinite Data Structures’         │
+│ with Graham Hutton                            │
+│                                               │
+│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com> │
+│                                               │
+│ This code is licensed only for study and      │
+│ personal enrichment.                          │
+└───────────────────────────────────────────────┘
+
+
+│ Relevant resources:
+│ - Hutton talking about this on ‘Computerphile’: https://youtu.be/bnRNiE_OVWA
+│ - ‘Why Functional Programming Matters’ (J.Hughes, 1990): tinyurl.com/k7r2m62
+
+
+┌──────────────────────────────────────────┐
+│ ‘The raison  d'être  of a program  is to │
+│ be  a  mathematically-elegant  object of │
+│ sublime beauty; it's also pretty cool if │
+│ it  occasionally   computes  something.’ │
+│                             - K.D.P.Ross │
+└──────────────────────────────────────────┘
+
+
+
+│ Motmot doesn't have Haskell-style `[2..]`, but we can
+│ easily concoct the (potentially-)infinite list of natural
+│ numbers starting from 2.
+│ Hutton's code:
+│ primes = sieve [2..]
+
+primes : Stream Num =
+  Unit |>
+    nats-stream >>
+    drop-while-stream (_ < 2) >>
+    sieve
+
+│ Motmot doesn't have list comprehensions (or pattern
+│ matching on `Stream`s); let's write this more
+│ idiomatically.
+│ Hutton's code:
+│ sieve (p : ps) = p : sieve [ x | x <- ps, mod x p /= 0 ]
+
+sieve : Stream Num -> Stream Num =
+  decons-stream{ Num } >>
+    (Just ((p : Num), (ps : Stream Num)) ~
+       let (divisible-by-p : Num -> Bool) =
+         (_ mod p) >>
+           (0 =/= _)
+       in
+       const{ Unit } p ::: (Unit ~ filter-stream divisible-by-p ps)
+    )
+
+│ Here, we have a somewhat different approach to the `twin`
+│ function: The idiomatic Motmot is point-free. As well,
+│ Motmot uses pipeline syntax, rather than all of the
+│ brackets.
+│ Hutton's code:
+│ twins = filter twin (zip primes (tail primes))
+│ twin (x, y) = y == x + 2
+
+twin-primes : Stream (Num, Num) =
+  let (twin : (Num, Num) -> Bool) =
+         first{ Num } (_ + 2) >>
+           uncurry (=={ Num })
+  in
+  primes |>
+    drop-stream 1 >>
+    zip-stream primes >>
+    filter-stream twin
+
+│ Fun fact: The 100000th prime is 199999.
+
+hundred-thousandth-prime : Num =
+  primes |>
+    drop-stream (100000 - 1) >>
+    take-stream 1 >>
+    stream->list >>
+    head

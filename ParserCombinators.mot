@@ -1,27 +1,29 @@
 #Motmot
 
--- Parser combinators in Motmot based on those from      --
--- ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) --
---                                                       --
--- Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         --
---                                                       --
--- This code is licensed only for study and personal     --
--- enrichment.                                           --
+┌───────────────────────────────────────────────────────┐
+│ Parser combinators in Motmot based on those from      │
+│ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
+│                                                       │
+│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         │
+│                                                       │
+│ This code is licensed only for study and personal     │
+│ enrichment.                                           │
+└───────────────────────────────────────────────────────┘
 
 
--- Relevant resources:
--- - the original paper: tinyurl.com/sr5w7zp
--- - Wikipedia article ‘Parser Combinators’: tinyurl.com/nw3epcy
--- - Hutton talking about this on ‘Computerphile’: https://youtu.be/dDtZLm7HIJs
+│ Relevant resources:
+│ - the original paper: tinyurl.com/sr5w7zp
+│ - Wikipedia article ‘Parser Combinators’: tinyurl.com/nw3epcy
+│ - Hutton talking about this on ‘Computerphile’: https://youtu.be/dDtZLm7HIJs
 
 
--- /------------------------------------------\
--- | ‘The raison  d'être  of a program  is to |
--- | be  a  mathematically-elegant  object of |
--- | sublime beauty; it's also pretty cool if |
--- | it  occasionally   computes  something.’ |
--- |                             - K.D.P.Ross |
--- \------------------------------------------/
+┌──────────────────────────────────────────┐
+│ ‘The raison  d'être  of a program  is to │
+│ be  a  mathematically-elegant  object of │
+│ sublime beauty; it's also pretty cool if │
+│ it  occasionally   computes  something.’ │
+│                             - K.D.P.Ross │
+└──────────────────────────────────────────┘
 
 
 
@@ -29,30 +31,30 @@
 
 typedef Letter        = String
 
-typedef Letters       = List Letter
+typedef Letters       = [ Letter ]
 
-typedef Parser result = Letters -> List (result, Letters)
+typedef Parser result = Letters -> [ (result, Letters) ]
 
 
 -- ===== Primitive Parsers (§2.1) ===== --
 
 succeed : (result : *) => result -> Parser result =
   (result : *) =>
-    (v : result) | (inp : Letters) ~ [ (v, inp) ]{ (result, Letters) }
+    (v : result) | (inp : Letters) ~ [ (v, inp) ]
 
 fail : (result : *) => Parser result =
   (result : *) =>
-    (_ : Letters) ~ []{ (result, Letters) }
+    const{ Letters } [{ (result, Letters) }]
 
 satisfy : (Letter -> Bool) -> Parser Letter =
   (p : Letter -> Bool) ~
     case of
-    (Nil{ Letter }                            ~ []{ (Letter, Letters) })
-    (Cons ((x : Letter) & {p}) (xs : Letters) ~ succeed x xs)
-    (fail{Letter})
+    ([{ Letter }]                           ~ [{ (Letter, Letters) }])
+    (((x : Letter) & {p}) :: (xs : Letters) ~ succeed x xs)
+    fail{Letter}
 
 literal : Letter -> Parser Letter =
-  (x : Letter) ~ satisfy (== x)
+  (x : Letter) ~ satisfy (x == _)
 
 
 -- ===== Combinators (§2.2) ===== --
@@ -90,33 +92,33 @@ mixfix 80 _ >>> _
 >>> : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b =
   (a : *) => (b : *) =>
     (p : Parser a) | (f : a -> b) ~
-      p >> map ((first{ Letters }) f)
+      p >> map (first{ Letters } f)
 
-many : (a : *) => Parser a -> Parser (List a) =
+many : (a : *) => Parser a -> Parser [ a ] =
   (a : *) =>
-    (p : Parser a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (Cons{ a })) || succeed (Nil{ a })
+    (p : Parser a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
 
-some : (a : *) => Parser a -> Parser (List a) =
+some : (a : *) => Parser a -> Parser [ a ] =
   (a : *) =>
     (p : Parser a) ~
-      p <=> many p >>> uncurry (Cons{ a })
+      p <=> many p >>> uncurry (::{ a })
 
 number : Parser String =
   let (digit : String -> Bool) =
-        (=< $0$) and^ (flip ((=<){ String }) $9$)
+        ($0$ =< _) and^ (_ =< $9$)
   in some (satisfy digit) >>> implode
 
 word : Parser String =
   let (letter : String -> Bool) =
         lowercase >>
-          ((=< $a$) and^ (flip ((=<){ String }) $z$))
+          ($a$ =< _) and^ (_ =< $z$)
   in some (satisfy letter) >>> implode
 
 string : String -> Parser String =
-  let (core : List String -> Parser String) =
+  let (core : [ String ] -> Parser String) =
         (case of
-         (Nil{ String }                        ~ succeed $$)
-         (Cons (x : String) (xs : List String) ~ literal x <=> core xs >>> uncurry (#))
+         ([{ String }]                      ~ succeed $$)
+         ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
         )
   in explode >>
        core
@@ -126,20 +128,20 @@ mixfix 110 _ ==> _
 ==> : (a : *) => (b : *) => Parser a -> Parser b -> Parser b =
   (a : *) => (b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
-      p1 <=> p2 >>> (snd{ a, b })
+      p1 <=> p2 >>> snd{ a, b }
 
 mixfix 110 _ <== _
 
 <== : (a : *) => (b : *) => Parser a -> Parser b -> Parser a =
   (a : *) => (b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
-      p1 <=> p2 >>> (fst{ a, b })
+      p1 <=> p2 >>> fst{ a, b }
 
 mixfix 80 _ return _
 
 return : (a : *) => (b : *) => Parser a -> b -> Parser b =
   (a : *) => (b : *) =>
-    (p : Parser a) | (v : b) ~ p >>> (const{ a }) v
+    (p : Parser a) | (v : b) ~ p >>> const{ a } v
 
 
 
@@ -184,7 +186,7 @@ factor : Parser Expr =
   (number >>> value) ||
     ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
 
-value : String -> Expr        = (read{ Num }) >> Num
+value : String -> Expr        = read{ Num } >> Num
 
 plus : (Expr, Expr) -> Expr   = uncurry Add
 
@@ -216,31 +218,29 @@ read-eval-print : String -> Unit =
              | (e : Maybe Expr) = s |>
                                     explode >>
                                     wrap-parser-unique expn
-             | (_ : Unit)       = (case e of
+             | Unit             = (case e of
                                    (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
-                                                      (let (v : Num) = eval-expr e
-                                                       in print ($eval:   `$ # show v # $`.$)
-                                                      )
+                                                      print ($eval:   `$ # show (eval-expr e) # $`.$)
                                    )
                                    (Nothing{ Expr } ~ print $PARSE FAILURE!$)
                                   )
     in Unit
 
-wrap-parser : (a : *) => Parser a -> Letters -> List a =
+wrap-parser : (a : *) => Parser a -> Letters -> [ a ] =
   (a : *) =>
     (p : Parser a) ~
       p >>
-        filter ((snd{ a, Letters }) >>
-                  (== (Nil{ Letter }))
+        filter (snd{ a, Letters } >>
+                  ([{ Letter }] == _)
                ) >>
-        map (fst{ a, Letters })
+        map fst{ a, Letters }
 
 wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
   (a : *) =>
     (p : Parser a) | (inp : Letters) ~
       case wrap-parser p inp of
-      (Cons (v : a) (Nil{ a }) ~ Just v)
-      ((_ : List a)            ~ Nothing{ a })
+      ((v : a) :: [{ a }] ~ Just v)
+      ((_ : [ a ])        ~ Nothing{ a })
 
 
 -- ===== Examples ==== --
