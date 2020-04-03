@@ -208,7 +208,7 @@ test = { testLoop,
              ...          = (alphaMap _ factorials) >> agreement
                             where agreement (x :: xs) = forall (_ == x) xs
              testLoop     : Num -> Bool
-             ... n        = (range 0 7 ++ map (\ _ -> random maxI) (range 1 n) :@ 5000) |> map testOne >> forall id
+             ... n        = ([ 0 .. 7 ] ++ map (\ _ -> random maxI) [ 1 .. n ] :@ 5000) |> map testOne >> forall id
                             -- Test 0 .. 7 (nice, small numbers) ... and some random
                             -- values ... and a *big* value.
                             where testOne i = i |> showProperFraction >> ("Testing " # _) >> printEndline

@@ -23,9 +23,7 @@ PRAGMA Library "Demo.Sudoku"
 
 
 _ = from "<Prelude.Extended>"
-      import [ "cartesian",
-               "count",
-               "decompositionsSimp",
+      import [ "decompositionsSimp",
                "minimumBy"
              ]
 
@@ -39,16 +37,14 @@ showPosition       : Position -> String
 ... (Position x y) = show (x, y)
 
 nums : [ Num ]
-...  = count 9
+...  = [ 1 .. 9 ]
 
 subs : [ Position ]
-...  = cartesian nums' nums' |>
-         map (uncurry2 Position)
+...  = [ Position x y | x <- nums', y <- nums' ]
        where nums' = [ 1, 4, 7 ]
 
 allPos : [ Position ]
-...    = cartesian nums nums |>
-           map (uncurry2 Position)
+...    = [ Position x y | x <- nums, y <- nums ]
 
 
 
@@ -152,12 +148,10 @@ canonicalSub       : Position -> Position
                      where adj x = x - (x - 1) mod 3 + 1
 
 possForSub          : Position -> [ Position ]
-... (Position r c)  = cartesian offsets offsets |>
-                        map p
-                      where offsets    = range 0 2
+... (Position r c)  = [ Position (r' + dr) (c' + dc) | dr <- offsets, dc <- offsets ]
+                      where offsets    = [ 0 .. 2 ]
                             r'         = r - (r - 1) mod 3
                             c'         = c - (c - 1) mod 3
-                            p (dr, dc) = Position (r' + dr) (c' + dc)
 
 getSub   : Square -> Position -> Chunk
 ... sq p = p |>

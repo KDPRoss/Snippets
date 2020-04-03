@@ -29,9 +29,7 @@ divisibleBy : Num -> Num -> Bool
 fizzBuzz : Num -> ()
 ...      = fun
              <(_ < 1)> -> ~
-             n         -> n |>
-                            range 1 >>
-                            iter doOne
+             n         -> iter doOne [ 1 .. n ]
            where doOne n = printEndline l
                            where l    = cases
                                           div3 and div5 -> "FizzBuzz"
@@ -50,9 +48,7 @@ fizzBuzz : Num -> ()
 generalisedFizzBuzz   : [ (Num -> Bool, a) ] -> (Num -> String) -> ([ a ] -> String) -> Num -> ()
 ... ps noTags combine = fun
                           <(_ < 1)> -> ~
-                          n         -> n |>
-                                         range 1 >>
-                                         iter doOne
+                          n         -> iter doOne [ 1 .. n ]
                         where doOne n = printEndline l
                                         where l = case ps |>
                                                          map ,((apply _ n), _) >>
