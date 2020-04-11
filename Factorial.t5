@@ -5,7 +5,7 @@ PRAGMA Library "Demo.Factorial"
 
 -- Factorial Implementations in Tanager.              --
 --                                                    --
--- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright K.D.P.Ross <KDPRoss@gmail.com>           --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --
@@ -135,6 +135,12 @@ factorialRange = max 1 >> range 1 >> foldl (*) 1
 
 
 
+-- Terse programmer
+
+factorialShort n = product [ 1 .. max 1 n ]
+
+
+
 -- Oh, hell, I might as well do Peano Arithmetic, also ;~P
 
 new data Nat = Z
@@ -197,6 +203,7 @@ test = { testLoop,
                                                            ("factorialCPS", factorialCPS),
                                                            ("factorialPointless", factorialPointless),
                                                            ("factorialRange", factorialRange),
+                                                           ("factorialShort", factorialShort),
                                                            ("factorialPeano", factorialPeanoHack)
                                                          ]
                                                          -- Check our definitions against the Prelude's.
