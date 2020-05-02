@@ -50,8 +50,8 @@ sieve : Stream Num -> Stream Num =
   decons-stream{ Num } >>
     (Just ((p : Num), (ps : Stream Num)) ~
        let (divisible-by-p : Num -> Bool) =
-         (_ mod p) >>
-           (0 =/= _)
+             (_ mod p) >>
+               (0 =/= _)
        in
        const{ Unit } p ::: (Unit ~ filter-stream divisible-by-p ps)
     )
@@ -66,8 +66,8 @@ sieve : Stream Num -> Stream Num =
 
 twin-primes : Stream (Num, Num) =
   let (twin : (Num, Num) -> Bool) =
-         first{ Num } (_ + 2) >>
-           uncurry (=={ Num })
+        first{ Num } (_ + 2) >>
+          uncurry (=={ Num })
   in
   primes |>
     drop-stream 1 >>

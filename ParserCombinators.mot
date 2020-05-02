@@ -214,16 +214,19 @@ eval-expr : Expr -> Num =
 
 read-eval-print : String -> Unit =
   (s : String) ~
-    let strict (_ : Unit)       = print ($input:  `$ # s # $`.$)
-             | (e : Maybe Expr) = s |>
-                                    explode >>
-                                    wrap-parser-unique expn
-             | Unit             = (case e of
-                                   (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
-                                                      print ($eval:   `$ # show (eval-expr e) # $`.$)
-                                   )
-                                   (Nothing{ Expr } ~ print $PARSE FAILURE!$)
-                                  )
+    let strict (_ : Unit) =
+                 print ($input:  `$ # s # $`.$)
+             | (e : Maybe Expr) =
+                 s |>
+                   explode >>
+                   wrap-parser-unique expn
+             | Unit =
+                 (case e of
+                  (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
+                                     print ($eval:   `$ # show (eval-expr e) # $`.$)
+                  )
+                  (Nothing{ Expr } ~ print $PARSE FAILURE!$)
+                 )
     in Unit
 
 wrap-parser : (a : *) => Parser a -> Letters -> [ a ] =
