@@ -29,11 +29,11 @@
 
 -- ========== The Combinator Library ========== --
 
-typedef Letter        = String
+typedef Letter  = String
 
-typedef Letters       = [ Letter ]
+typedef Letters = [ Letter ]
 
-typedef Parser result = Letters -> [ (result, Letters) ]
+typedef Parser  = (result : *) => Letters -> [ (result, Letters) ]
 
 
 -- ===== Primitive Parsers (§2.1) ===== --
@@ -104,24 +104,20 @@ some : (a : *) => Parser a -> Parser [ a ] =
       p <=> many p >>> uncurry (::{ a })
 
 number : Parser String =
-  let (digit : String -> Bool) =
-        ($0$ =< _) and^ (_ =< $9$)
-  in some (satisfy digit) >>> implode
+  some (satisfy digit) >>> implode
+  where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
 
 word : Parser String =
-  let (letter : String -> Bool) =
-        lowercase >>
-          ($a$ =< _) and^ (_ =< $z$)
-  in some (satisfy letter) >>> implode
+  some (satisfy letter) >>> implode
+  where (letter : String -> Bool) = lowercase >>
+                                      ($a$ =< _) and^ (_ =< $z$)
 
 string : String -> Parser String =
-  let (core : [ String ] -> Parser String) =
-        (case of
-         ([{ String }]                      ~ succeed $$)
-         ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
-        )
-  in explode >>
-       core
+  explode >> core
+  where (core : [ String ] -> Parser String) = (case of
+                                                ([{ String }]                      ~ succeed $$)
+                                                ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
+                                               )
 
 mixfix 110 _ ==> _
 

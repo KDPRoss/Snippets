@@ -49,11 +49,9 @@ primes : Stream Num =
 sieve : Stream Num -> Stream Num =
   decons-stream{ Num } >>
     (Just ((p : Num), (ps : Stream Num)) ~
-       let (divisible-by-p : Num -> Bool) =
-             (_ mod p) >>
-               (0 =/= _)
-       in
-       const{ Unit } p ::: (Unit ~ filter-stream divisible-by-p ps)
+       const{ Unit } p ::: (Unit ~ filter-stream not-divisible-by-p ps)
+       where (not-divisible-by-p : Num -> Bool) = (_ mod p) >>
+                                                    (0 =/= _)
     )
 
 │ Here, we have a somewhat different approach to the `twin`
@@ -65,14 +63,12 @@ sieve : Stream Num -> Stream Num =
 │ twin (x, y) = y == x + 2
 
 twin-primes : Stream (Num, Num) =
-  let (twin : (Num, Num) -> Bool) =
-        first{ Num } (_ + 2) >>
-          uncurry (=={ Num })
-  in
   primes |>
     drop-stream 1 >>
     zip-stream primes >>
     filter-stream twin
+  where (twin : (Num, Num) -> Bool) = first{ Num } (_ + 2) >>
+                                        uncurry (=={ Num })
 
 │ Fun fact: The 100000th prime is 199999.
 
