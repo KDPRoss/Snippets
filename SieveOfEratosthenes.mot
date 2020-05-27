@@ -35,7 +35,7 @@
 │ primes = sieve [2..]
 
 primes : Stream Num =
-  Unit |>
+  () |>
     nats-stream >>
     drop-while-stream (_ < 2) >>
     sieve
@@ -48,11 +48,11 @@ primes : Stream Num =
 
 sieve : Stream Num -> Stream Num =
   decons-stream{ Num } >>
-    (Just ((p : Num), (ps : Stream Num)) ~
-       const{ Unit } p ::: (Unit ~ filter-stream not-divisible-by-p ps)
-       where (not-divisible-by-p : Num -> Bool) = (_ mod p) >>
-                                                    (0 =/= _)
-    )
+  (Just ((p : Num), (ps : Stream Num)) ~
+     const{ () } p ::: (() ~ filter-stream not-divisible-by-p ps)
+     where (not-divisible-by-p : Num -> Bool) = (_ mod p) >>
+                                                (0 =/= _)
+  )
 
 │ Here, we have a somewhat different approach to the `twin`
 │ function: The idiomatic Motmot is point-free. As well,
@@ -68,7 +68,7 @@ twin-primes : Stream (Num, Num) =
     zip-stream primes >>
     filter-stream twin
   where (twin : (Num, Num) -> Bool) = first{ Num } (_ + 2) >>
-                                        uncurry (=={ Num })
+                                      uncurry (=={ Num })
 
 │ Fun fact: The 100000th prime is 199999.
 

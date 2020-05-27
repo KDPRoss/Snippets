@@ -76,10 +76,10 @@ mixfix 110 _ <=> _
   (a : *) => (b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 >>
-        concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
-                                                     p2 >>
-                                                     map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
-                   )
+      concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
+                                                   p2 >>
+                                                   map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
+                 )
 
 
 
@@ -114,10 +114,9 @@ word : Parser String =
 
 string : String -> Parser String =
   explode >> core
-  where (core : [ String ] -> Parser String) = (case of
-                                                ([{ String }]                      ~ succeed $$)
-                                                ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
-                                               )
+  where (core : [ String ] -> Parser String) = case of
+                                               ([{ String }]                      ~ succeed $$)
+                                               ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
 
 mixfix 110 _ ==> _
 
@@ -208,31 +207,27 @@ eval-expr : Expr -> Num =
 
 -- ===== Interpreter ===== --
 
-read-eval-print : String -> Unit =
+read-eval-print : String -> () =
   (s : String) ~
-    let strict (_ : Unit) =
-                 print ($input:  `$ # s # $`.$)
-             | (e : Maybe Expr) =
-                 s |>
-                   explode >>
-                   wrap-parser-unique expn
-             | Unit =
-                 (case e of
-                  (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
-                                     print ($eval:   `$ # show (eval-expr e) # $`.$)
-                  )
-                  (Nothing{ Expr } ~ print $PARSE FAILURE!$)
-                 )
-    in Unit
+    let strict (_ : ())         = print ($input:  `$ # s # $`.$)
+             | (e : Maybe Expr) = s |>
+                                    explode >>
+                                    wrap-parser-unique expn
+             | ()               = case e of
+                                  (Just (e : Expr) ~ print ($parsed: `$ # show e # $`.$) ;
+                                                     print ($eval:   `$ # show (eval-expr e) # $`.$)
+                                  )
+                                  (Nothing{ Expr } ~ print $PARSE FAILURE!$)
+    in ()
 
 wrap-parser : (a : *) => Parser a -> Letters -> [ a ] =
   (a : *) =>
     (p : Parser a) ~
       p >>
-        filter (snd{ a, Letters } >>
-                  ([{ Letter }] == _)
-               ) >>
-        map fst{ a, Letters }
+      filter (snd{ a, Letters } >>
+                ([{ Letter }] == _)
+             ) >>
+      map fst{ a, Letters }
 
 wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
   (a : *) =>
@@ -250,42 +245,42 @@ wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
 -- (ins) :s> read-eval-print $2+3*4$
 --  in: `read-eval-print $2+3*4$`
 -- out: `read-eval-print $2+3*4$`
--- has type: `Unit`
+-- has type: `()`
 -- PRINT input:  `2+3*4`.
 -- PRINT parsed: `Add (Num 2) (Mul (Num 3) (Num 4))`.
 -- PRINT eval:   `14`.
--- linearised: Unit
+-- linearised: ()
 
 -- (ins) :s> read-eval-print $(2+3)*4$
 --  in: `read-eval-print $(2+3)*4$`
 -- out: `read-eval-print $(2+3)*4$`
--- has type: `Unit`
+-- has type: `()`
 -- PRINT input:  `(2+3)*4`.
 -- PRINT parsed: `Mul (Add (Num 2) (Num 3)) (Num 4)`.
 -- PRINT eval:   `20`.
--- linearised: Unit
+-- linearised: ()
 
 -- (ins) :s> read-eval-print $(2+(7*10)+8)*20$
 --  in: `read-eval-print $(2+(7*10)+8)*20$`
 -- out: `read-eval-print $(2+(7*10)+8)*20$`
--- has type: `Unit`
+-- has type: `()`
 -- PRINT input:  `(2+(7*10)+8)*20`.
 -- PRINT parsed: `Mul (Add (Num 2) (Add (Mul (Num 7) (Num 10)) (Num 8))) (Num 20)`.
 -- PRINT eval:   `1600`.
--- linearised: Unit
+-- linearised: ()
 
 -- (ins) :s> read-eval-print $2+3*$
 --  in: `read-eval-print $2+3*$`
 -- out: `read-eval-print $2+3*$`
--- has type: `Unit`
+-- has type: `()`
 -- PRINT input:  `2+3*`.
 -- PRINT PARSE FAILURE!
--- linearised: Unit
+-- linearised: ()
 
 -- (ins) :s> read-eval-print $(2+3$
 --  in: `read-eval-print $(2+3$`
 -- out: `read-eval-print $(2+3$`
--- has type: `Unit`
+-- has type: `()`
 -- PRINT input:  `(2+3`.
 -- PRINT PARSE FAILURE!
--- linearised: Unit
+-- linearised: ()
