@@ -41,7 +41,7 @@ primes : Stream Num =
 
 sieve : Stream Num -> Stream Num =
   (p : Num) ::: (ps : Stream Num) ~
-    const{ () } p ::: (() ~ filter-stream not-divisible-by-p ps)
+    const{ () } p ::: (() ~ sieve (filter-stream not-divisible-by-p ps))
     where (not-divisible-by-p : Num -> Bool) = (_ mod p) >>
                                                (0 =/= _)
 
@@ -61,11 +61,12 @@ twin-primes : Stream (Num, Num) =
   where (twin : (Num, Num) -> Bool) = first{ Num } (2 + _) >>
                                       uncurry (=={ Num })
 
-│ Fun fact: The 100000th prime is 199999.
+│ Fun fact: The 1000th prime is 7919
 
-hundred-thousandth-prime : Num =
+thousandth-prime : Num =
   primes |>
-    drop-stream (100000 - 1) >>
+    progress-stream Nothing{ Num } >>
+    drop-stream (1000 - 1) >>
     take-stream 1 >>
     stream->list >>
     head
