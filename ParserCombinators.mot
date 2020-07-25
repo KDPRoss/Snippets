@@ -110,7 +110,7 @@ number : Parser String =
 word : Parser String =
   some (satisfy letter) >>> implode
   where (letter : String -> Bool) = lowercase >>
-                                      ($a$ =< _) and^ (_ =< $z$)
+                                    ($a$ =< _) and^ (_ =< $z$)
 
 string : String -> Parser String =
   explode >> core
