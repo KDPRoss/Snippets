@@ -51,7 +51,7 @@ satisfy : (Letter -> Bool) -> Parser Letter =
     case of
     ([{ Letter }]                           ~ [{ (Letter, Letters) }])
     (((x : Letter) & {p}) :: (xs : Letters) ~ succeed x xs)
-    fail{Letter}
+    fail{ Letter }
 
 literal : Letter -> Parser Letter =
   (x : Letter) ~ satisfy (x == _)
