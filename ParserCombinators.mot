@@ -42,7 +42,7 @@ succeed : (result : *) => result -> Parser result =
   (result : *) =>
     (v : result) | (inp : Letters) ~ [ (v, inp) ]
 
-fail : (result : *) => Parser result =
+fail-parse : (result : *) => Parser result =
   (result : *) =>
     const{ Letters } [{ (result, Letters) }]
 
@@ -51,7 +51,7 @@ satisfy : (Letter -> Bool) -> Parser Letter =
     case of
     ([{ Letter }]                           ~ [{ (Letter, Letters) }])
     (((x : Letter) & {p}) :: (xs : Letters) ~ succeed x xs)
-    fail{ Letter }
+    fail-parse{ Letter }
 
 literal : Letter -> Parser Letter =
   (x : Letter) ~ satisfy (x == _)
@@ -80,7 +80,6 @@ mixfix 110 _ <=> _
                                                    p2 >>
                                                    map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
                  )
-
 
 
 -- ===== Manipulating Values (§2.3) ===== --
