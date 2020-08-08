@@ -62,6 +62,13 @@
 -- - pattern conjunction.
 
 
+mixfix 100 _ || _
+mixfix 110 _ <=> _
+mixfix 80 _ >>> _
+mixfix 110 _ ==> _
+mixfix 110 _ <== _
+mixfix 80 _ return _
+
 -- ========== The Combinator Library ========== --
 
 typedef Letter  = String
@@ -120,6 +127,10 @@ many               : (a : *) => Parser a -> Parser [ a ]
 
 some               : (a : *) => Parser a -> Parser [ a ]
 ... (p : Parser a) = p <=> many p >>> uncurry (::{ a })
+
+number : Parser String
+...    = some (satisfy digit) >>> implode
+         where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
 
 string : String -> Parser String
 ...    = explode >> core
@@ -219,6 +230,11 @@ wrap-parser        : (a : *) => Parser a -> Letters -> [ a ]
                                ([{ Letter }] == _)
                               ) >>
                        map fst{ a, Letters }
+
+wrap-parser-unique                 : (a : *) => Parser a -> Letters -> Maybe a
+... (p : Parser a) (inp : Letters) = case wrap-parser p inp
+                                       ((v : a) :: [{ a }]) -> Just v
+                                       (_ : [ a ])          -> Nothing{ a }
 
 
 -- ===== Examples ==== --
