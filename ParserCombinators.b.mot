@@ -135,6 +135,12 @@ number : Parser String
 ...    = some (satisfy digit) >>> implode
          where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
 
+word : Parser String
+...  = some (satisfy letter) >>> implode
+       where letter : String -> Bool
+             ...    = lowercase >>
+                        ($a$ =< _) and^ (_ =< $z$)
+
 string : String -> Parser String
 ...    = explode >> core
          where core                                    : [ String ] -> Parser String
