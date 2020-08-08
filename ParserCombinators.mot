@@ -26,7 +26,6 @@
 └──────────────────────────────────────────┘
 
 
-
 -- ========== The Combinator Library ========== --
 
 typedef Letter  = String
@@ -61,7 +60,7 @@ literal : Letter -> Parser Letter =
 
 mixfix 100 _ || _
 
--- `alt` from Hutton's implementation.
+│ `alt` from Hutton's implementation.
 
 || : (a : *) => Parser a -> Parser a -> Parser a =
   (a : *) =>
@@ -70,7 +69,7 @@ mixfix 100 _ || _
 
 mixfix 110 _ <=> _
 
--- `then` from Hutton's implementation; η-reduced.
+│ `then` from Hutton's implementation; η-reduced.
 
 <=> : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b) =
   (a : *) => (b : *) =>
@@ -86,7 +85,7 @@ mixfix 110 _ <=> _
 
 mixfix 80 _ >>> _
 
--- `using` from Hutton's implementation.
+│ `using` from Hutton's implementation.
 
 >>> : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b =
   (a : *) => (b : *) =>
@@ -138,7 +137,6 @@ return : (a : *) => (b : *) => Parser a -> b -> Parser b =
     (p : Parser a) | (v : b) ~ p >>> const{ a } v
 
 
-
 -- ========== Example Expression Language (§2.4) ========== --
 
 -- ===== Expression Representation ===== --
@@ -158,13 +156,13 @@ axiom Div  : Expr -> Expr -> Expr
 
 -- ===== Expression Parser ===== --
 
--- The η-expansion is necessary here because we're of
--- applicative-order (rather than lazy) evaluation; this
--- stuff always looks better in Haskell (or Miranda)!
+│ The η-expansion is necessary here because we're of
+│ applicative-order (rather than lazy) evaluation; this
+│ stuff always looks better in Haskell (or Miranda)!
 
--- Diverge a bit from the paper here to allow things like
--- `$2+3+4$`; this was handled by Hutton's code in the
--- video.
+│ Diverge a bit from the paper here to allow things like
+│ `$2+3+4$`; this was handled by Hutton's code in the
+│ video.
 
 expn : Parser Expr =
   (term <== literal $+$ <=> ((inp : Letters) ~ expn inp) >>> plus) ||
@@ -193,7 +191,7 @@ divide : (Expr, Expr) -> Expr = uncurry Div
 
 -- ===== Evaluator ===== --
 
--- Don't handle error cases (e.g., `_ / 0`).
+│ Don't handle error cases (e.g., `_ / 0`).
 
 eval-expr : Expr -> Num =
   case of
@@ -238,8 +236,8 @@ wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
 
 -- ===== Examples ==== --
 
--- These are the examples that Hutton shows in the
--- ‘Computerphile’ video.
+│ These are the examples that Hutton shows in the
+│ ‘Computerphile’ video.
 
 -- (ins) :s> read-eval-print $2+3*4$
 --  in: `read-eval-print $2+3*4$`

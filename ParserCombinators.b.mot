@@ -1,66 +1,68 @@
 #MotmotB
 
--- ┌───────────────────────────────────────────────────────┐
--- │ Parser combinators in Motmot based on those from      │
--- │ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
--- │                                                       │
--- │ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         │
--- │                                                       │
--- │ This code is licensed only for study and personal     │
--- │ enrichment.                                           │
--- └───────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│ Parser combinators in Motmot based on those from      │
+│ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
+│                                                       │
+│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         │
+│                                                       │
+│ This code is licensed only for study and personal     │
+│ enrichment.                                           │
+└───────────────────────────────────────────────────────┘
 
 
--- Relevant resources:
--- - the original paper: tinyurl.com/sr5w7zp
--- - Wikipedia article ‘Parser Combinators’: tinyurl.com/nw3epcy
--- - Hutton talking about this on ‘Computerphile’: https://youtu.be/dDtZLm7HIJs
+│ Relevant resources:
+│ - the original paper: tinyurl.com/sr5w7zp
+│ - Wikipedia article ‘Parser Combinators’: tinyurl.com/nw3epcy
+│ - Hutton talking about this on ‘Computerphile’: https://youtu.be/dDtZLm7HIJs
 
 
--- ┌──────────────────────────────────────────┐
--- │ ‘The raison  d'être  of a program  is to │
--- │ be  a  mathematically-elegant  object of │
--- │ sublime beauty; it's also pretty cool if │
--- │ it  occasionally   computes  something.’ │
--- │                             - K.D.P.Ross │
--- └──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ ‘The raison  d'être  of a program  is to │
+│ be  a  mathematically-elegant  object of │
+│ sublime beauty; it's also pretty cool if │
+│ it  occasionally   computes  something.’ │
+│                             - K.D.P.Ross │
+└──────────────────────────────────────────┘
 
 
--- This code is an example of ‘Motmot B’ syntax (Cf. the
--- ‘Motmot A’ version.). (N.b., ‘Motmot C’ also–exists—it's
--- the core language that both ‘A’ and ‘B’ variants are
--- desugared to internally.) I've often (half-(?))joked
--- about what it might be like for multiple programming
--- languages to have ‘linguistic offspring’, combining
--- features from each, and what the resulting language would
--- ‘feel like’; to explore this, I've augmented Motmot to
--- parse Tanager-like block-based / two-dimensional syntax.
--- –and– It feels like an odd mix of Motmot and Tanager,
--- which probably ought to be less surprising than it is.
--- Specifically it has:
--- - Tanagerific
---   - aligned-in-two-dimensions ‘block’ syntax (with
---     ‘small-block’ embedding)
---   - define-by-clauses (à la Hope / Miranda / Haskell).
--- - Motmotastic
---   - higher-kinded type variables / explicit type
---     abstraction (full Fω)
---   - Church-style abstraction / type checking (rather than
---     inference)
---   - partial-function composition
---   - vaguely-Haskell-style infix ‘sections’
---   - ‘exotic’ `~`-delimited λs.
--- –and– Since they share a common linguistic heritage
--- (Codeine′, Tanager4), they share numerous fairly-unique
--- language features:
--- - open algebraic datatypes
--- - arbitrary-fixity / -precedence mixfix names
--- - F#-inspired `|>` / `>>` pipelining
--- - function patterns
--- - predicate patterns
--- - expression patterns
--- - pattern conjunction.
+│ This code is an example of ‘Motmot B’ syntax (Cf. the
+│ ‘Motmot A’ version.). (N.b., ‘Motmot C’ also–exists—it's
+│ the core language that both ‘A’ and ‘B’ variants are
+│ desugared to internally.) I've often (half-(?))joked
+│ about what it might be like for multiple programming
+│ languages to have ‘linguistic offspring’, combining
+│ features from each, and what the resulting language would
+│ ‘feel like’; to explore this, I've augmented Motmot to
+│ parse Tanager-like block-based / two-dimensional syntax.
+│ –and– It feels like an odd mix of Motmot and Tanager,
+│ which probably ought to be less surprising than it is.
+│ Specifically it has:
+│ - Tanagerific
+│   - aligned-in-two-dimensions ‘block’ syntax (with
+│     ‘small-block’ embedding)
+│   - define-by-clauses (à la Hope / Miranda / Haskell).
+│ - Motmotastic
+│   - higher-kinded type variables / explicit type
+│     abstraction (full Fω)
+│   - Church-style abstraction / type checking (rather than
+│     inference)
+│   - partial-function composition
+│   - vaguely-Haskell-style infix ‘sections’
+│   - ‘exotic’ `~`-delimited λs.
+│ –and– Since they share a common linguistic heritage
+│ (Codeine′, Tanager4), they share numerous fairly-unique
+│ language features:
+│ - open algebraic datatypes
+│ - arbitrary-fixity / -precedence mixfix names
+│ - F#-inspired `|>` / `>>` pipelining
+│ - function patterns
+│ - predicate patterns
+│ - expression patterns
+│ - pattern conjunction.
 
+
+-- ========== Mixfix Syntax Setup ========== --
 
 mixfix 100 _ || _
 mixfix 110 _ <=> _
@@ -68,6 +70,7 @@ mixfix 80 _ >>> _
 mixfix 110 _ ==> _
 mixfix 110 _ <== _
 mixfix 80 _ return _
+
 
 -- ========== The Combinator Library ========== --
 
@@ -97,13 +100,13 @@ literal          : Letter -> Parser Letter
 
 -- ===== Combinators (§2.2) ===== --
 
--- `alt` from Hutton's implementation.
+│ `alt` from Hutton's implementation.
 
 ||                                  : (a : *) => Parser a -> Parser a -> Parser a
 ... (p1 : Parser a) (p2 : Parser a) = (inp : Letters) ~ p1 inp ++ p2 inp
 
 
--- `then` from Hutton's implementation; η-reduced.
+│ `then` from Hutton's implementation; η-reduced.
 
 <=>                                 : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b)
 ... (p1 : Parser a) (p2 : Parser b) = p1 >>
@@ -116,7 +119,7 @@ literal          : Letter -> Parser Letter
 
 -- ===== Manipulating Values (§2.3) ===== --
 
--- `using` from Hutton's implementation.
+│ `using` from Hutton's implementation.
 
 >>>                             : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b
 ... (p : Parser a) (f : a -> b) = p >> map (first{ Letters } f)
@@ -162,13 +165,13 @@ new data Expr = Num Num
 
 -- ===== Expression Parser ===== --
 
--- The η-expansion is necessary here because we're of
--- applicative-order (rather than lazy) evaluation; this
--- stuff always looks better in Haskell (or Miranda)!
+│ The η-expansion is necessary here because we're of
+│ applicative-order (rather than lazy) evaluation; this
+│ stuff always looks better in Haskell (or Miranda)!
 
--- Diverge a bit from the paper here to allow things like
--- `$2+3+4$`; this was handled by Hutton's code in the
--- video.
+│ Diverge a bit from the paper here to allow things like
+│ `$2+3+4$`; this was handled by Hutton's code in the
+│ video.
 
 expn : Parser Expr
 ...  = (term <== literal $+$ <=> ((inp : Letters) ~ expn inp) >>> plus) ||
@@ -202,7 +205,7 @@ divide : (Expr, Expr) -> Expr
 
 -- ===== Evaluator ===== --
 
--- Don't handle error cases (e.g., `_ / 0`).
+│ Don't handle error cases (e.g., `_ / 0`).
 
 eval-expr                        : Expr -> Num
 ... (Num (n : Num))              = n
@@ -239,8 +242,8 @@ wrap-parser-unique                 : (a : *) => Parser a -> Letters -> Maybe a
 
 -- ===== Examples ==== --
 
--- These are the examples that Hutton shows in the
--- ‘Computerphile’ video.
+│ These are the examples that Hutton shows in the
+│ ‘Computerphile’ video.
 
 -- (ins) :s> read-eval-print $2+3*4$
 --  in: `read-eval-print $2+3*4$`
