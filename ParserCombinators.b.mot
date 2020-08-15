@@ -102,15 +102,14 @@ literal          : Letter -> Parser Letter
 
 │ `alt` from Hutton's implementation.
 
-||                                  : (a : *) => Parser a -> Parser a -> Parser a
-... (p1 : Parser a) (p2 : Parser a) = (inp : Letters) ~ p1 inp ++ p2 inp
+||                                                  : (a : *) => Parser a -> Parser a -> Parser a
+... (p1 : Parser a) (p2 : Parser a) (inp : Letters) = p1 inp ++ p2 inp
 
 
 │ `then` from Hutton's implementation; η-reduced.
 
 <=>                                 : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b)
-... (p1 : Parser a) (p2 : Parser b) = p1 >>
-                                        concat-map core
+... (p1 : Parser a) (p2 : Parser b) = p1 >> concat-map core
                                       where core                             : (a, Letters) -> [ ((a, b), Letters) ]
                                             ... ((v1 : a), (out1 : Letters)) = out1 |>
                                                                                  p2 >>
@@ -133,13 +132,13 @@ some               : (a : *) => Parser a -> Parser [ a ]
 
 number : Parser String
 ...    = some (satisfy digit) >>> implode
-         where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
+         where digit : String -> Bool
+               ...   = ($0$ =< _) and^ (_ =< $9$)
 
 word : Parser String
 ...  = some (satisfy letter) >>> implode
        where letter : String -> Bool
-             ...    = lowercase >>
-                        ($a$ =< _) and^ (_ =< $z$)
+             ...    = lowercase >> ($a$ =< _) and^ (_ =< $z$)
 
 string : String -> Parser String
 ...    = explode >> core
@@ -224,11 +223,10 @@ eval-expr                        : Expr -> Num
 -- ===== Interpreter ===== --
 
 read-eval-print  : String -> ()
-... (s : String) = let strict (_ : ())         = print ($input:  `$ # s # $`.$)
-                              (e : Maybe Expr) = s |>
-                                                   explode >>
-                                                   wrap-parser-unique expn
-                   case e
+... (s : String) = print ($input:  `$ # s # $`.$)
+                   case s |>
+                          explode >>
+                          wrap-parser-unique expn
                      (Just (e : Expr)) -> print ($parsed: `$ # show e # $`.$)
                                           print ($eval:   `$ # show (eval-expr e) # $`.$)
                      Nothing{ Expr }   ->  print $PARSE FAILURE!$
