@@ -69,11 +69,14 @@ are not available for anyone's use other than mine.
     Z-values corresponding to recursion depth:
     ![Motmot-B syntax.](MotmotBParserVisualisation3D.png)
 
+* [PolymorphicRecursion.b.mot](PolymorphicRecursion.b.mot):
+  ‘Motmot-B’-syntax examples of polymorphic recursion based
+  on Hallett and Kfoury's paper on the topic.
+
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot):
   Generate primes; based on some more code by Hutton,
   demonstrating ‘Why Functional Programming Matters’-style
   manipulation of (potentially-)infinite data structures.
-
 
 ## The Rosetta Stone
 
