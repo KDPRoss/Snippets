@@ -89,10 +89,10 @@ succeed                          : (result : *) => result -> Parser result
 fail-parse : (result : *) => Parser result
 ...        = const{ Letters } [{ (result, Letters) }]
 
-satisfy                                                           : (Letter -> Bool) -> Parser Letter
-... (_ : Letter -> Bool) [{ Letter }]                             = [{ (Letter, Letters) }]
-... (p : Letter -> Bool) (((x : Letter) & {p}) :: (xs : Letters)) = succeed x xs
-... (_ : Letter -> Bool) (ls : Letters)                           = fail-parse{ Letter } ls
+satisfy                                                             : (Letter -> Bool) -> Parser Letter
+... (_ : Letter -> Bool) [{ Letter }]                               = [{ (Letter, Letters) }]
+... (p : Letter -> Bool) (((x : Letter) and {p}) :: (xs : Letters)) = succeed x xs
+... (_ : Letter -> Bool) (ls : Letters)                             = fail-parse{ Letter } ls
 
 literal          : Letter -> Parser Letter
 ... (x : Letter) = satisfy (x == _)

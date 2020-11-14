@@ -48,8 +48,8 @@ fail-parse : (result : *) => Parser result =
 satisfy : (Letter -> Bool) -> Parser Letter =
   (p : Letter -> Bool) ~
     case of
-    ([{ Letter }]                           ~ [{ (Letter, Letters) }])
-    (((x : Letter) & {p}) :: (xs : Letters) ~ succeed x xs)
+    ([{ Letter }]                             ~ [{ (Letter, Letters) }])
+    (((x : Letter) and {p}) :: (xs : Letters) ~ succeed x xs)
     fail-parse{ Letter }
 
 literal : Letter -> Parser Letter =
