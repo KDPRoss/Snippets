@@ -75,9 +75,7 @@ mixfix 80 _ return _
 -- ========== The Combinator Library ========== --
 
 typedef Letter  = String
-
 typedef Letters = [ Letter ]
-
 typedef Parser  = (result : *) => Letters -> [ (result, Letters) ]
 
 

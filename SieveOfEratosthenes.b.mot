@@ -34,14 +34,11 @@
 primes : Stream Num
 ...    = sieve { 2 .. }
 
-│ Motmot doesn't have list comprehensions; let's write this
-│ more idiomatically.
 │ Hutton's code:
 │ sieve (p : ps) = p : sieve [ x | x <- ps, mod x p /= 0 ]
 
 sieve                                 : Stream Num -> Stream Num
-... ((p : Num) ::: (ps : Stream Num)) = (() ~ p) ::: (() ~ sieve (filter-stream not-divisible-by-p ps))
-                                        where (not-divisible-by-p : Num -> Bool) = (_ mod p) >> (0 =/= _)
+... ((p : Num) ::: (ps : Stream Num)) = (() ~ p) ::: (() ~ sieve { x | (x : Num) <- ps, x mod p =/= 0 })
 
 │ Here, we have a somewhat different approach to the `twin`
 │ function: The idiomatic Motmot is point-free. As well,
