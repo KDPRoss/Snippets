@@ -71,8 +71,8 @@ mixfix 110 _ <=> _
 
 │ `then` from Hutton's implementation; η-reduced.
 
-<=> : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b) =
-  (a : *) => (b : *) =>
+<=> : (a, b : *) => Parser a -> Parser b -> Parser (a, b) =
+  (a, b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 >>
       concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
@@ -87,8 +87,8 @@ mixfix 80 _ >>> _
 
 │ `using` from Hutton's implementation.
 
->>> : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b =
-  (a : *) => (b : *) =>
+>>> : (a, b : *) => Parser a -> (a -> b) -> Parser b =
+  (a, b : *) =>
     (p : Parser a) | (f : a -> b) ~
       p >> map (first{ Letters } f)
 
@@ -118,22 +118,22 @@ string : String -> Parser String =
 
 mixfix 110 _ ==> _
 
-==> : (a : *) => (b : *) => Parser a -> Parser b -> Parser b =
-  (a : *) => (b : *) =>
+==> : (a, b : *) => Parser a -> Parser b -> Parser b =
+  (a, b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 <=> p2 >>> snd{ a, b }
 
 mixfix 110 _ <== _
 
-<== : (a : *) => (b : *) => Parser a -> Parser b -> Parser a =
-  (a : *) => (b : *) =>
+<== : (a, b : *) => Parser a -> Parser b -> Parser a =
+  (a, b : *) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 <=> p2 >>> fst{ a, b }
 
 mixfix 80 _ return _
 
-return : (a : *) => (b : *) => Parser a -> b -> Parser b =
-  (a : *) => (b : *) =>
+return : (a, b : *) => Parser a -> b -> Parser b =
+  (a, b : *) =>
     (p : Parser a) | (v : b) ~ p >>> const{ a } v
 
 

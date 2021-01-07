@@ -106,7 +106,7 @@ literal          : Letter -> Parser Letter
 
 │ `then` from Hutton's implementation; η-reduced.
 
-<=>                                 : (a : *) => (b : *) => Parser a -> Parser b -> Parser (a, b)
+<=>                                 : (a, b : *) => Parser a -> Parser b -> Parser (a, b)
 ... (p1 : Parser a) (p2 : Parser b) = p1 >> concat-map core
                                       where core                             : (a, Letters) -> [ ((a, b), Letters) ]
                                             ... ((v1 : a), (out1 : Letters)) = out1 |>
@@ -118,7 +118,7 @@ literal          : Letter -> Parser Letter
 
 │ `using` from Hutton's implementation.
 
->>>                             : (a : *) => (b : *) => Parser a -> (a -> b) -> Parser b
+>>>                             : (a, b : *) => Parser a -> (a -> b) -> Parser b
 ... (p : Parser a) (f : a -> b) = p >> map (first{ Letters } f)
 
 
@@ -144,13 +144,13 @@ string : String -> Parser String
                ... [{ String }]                        = succeed $$
                ... ((x : String) :: (xs : [ String ])) = literal x <=> core xs >>> uncurry (#)
 
-==>                                 : (a : *) => (b : *) => Parser a -> Parser b -> Parser b
+==>                                 : (a, b : *) => Parser a -> Parser b -> Parser b
 ... (p1 : Parser a) (p2 : Parser b) = p1 <=> p2 >>> snd{ a, b }
 
-<==                                 : (a : *) => (b : *) => Parser a -> Parser b -> Parser a
+<==                                 : (a, b : *) => Parser a -> Parser b -> Parser a
 ... (p1 : Parser a) (p2 : Parser b) = p1 <=> p2 >>> fst{ a, b }
 
-return                     : (a : *) => (b : *) => Parser a -> b -> Parser b
+return                     : (a, b : *) => Parser a -> b -> Parser b
 ... (p : Parser a) (v : b) = p >>> const{ a } v
 
 
