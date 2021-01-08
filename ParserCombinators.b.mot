@@ -84,7 +84,7 @@ typedef Parser  = (result : *) => Letters -> [ (result, Letters) ]
 succeed                          : (result : *) => result -> Parser result
 ... (v : result) (inp : Letters) = [ (v, inp) ]
 
-fail-parse : (result : *) => Parser result
+fail-parse : result => Parser result
 ...        = const{ Letters } [{ (result, Letters) }]
 
 satisfy                                                             : (Letter -> Bool) -> Parser Letter
@@ -100,13 +100,13 @@ literal          : Letter -> Parser Letter
 
 │ `alt` from Hutton's implementation.
 
-||                                                  : (a : *) => Parser a -> Parser a -> Parser a
+||                                                  : a => Parser a -> Parser a -> Parser a
 ... (p1 : Parser a) (p2 : Parser a) (inp : Letters) = p1 inp ++ p2 inp
 
 
 │ `then` from Hutton's implementation; η-reduced.
 
-<=>                                 : (a, b : *) => Parser a -> Parser b -> Parser (a, b)
+<=>                                 : (a, b) => Parser a -> Parser b -> Parser (a, b)
 ... (p1 : Parser a) (p2 : Parser b) = p1 >> concat-map core
                                       where core                             : (a, Letters) -> [ ((a, b), Letters) ]
                                             ... ((v1 : a), (out1 : Letters)) = out1 |>
@@ -118,14 +118,14 @@ literal          : Letter -> Parser Letter
 
 │ `using` from Hutton's implementation.
 
->>>                             : (a, b : *) => Parser a -> (a -> b) -> Parser b
+>>>                             : (a, b) => Parser a -> (a -> b) -> Parser b
 ... (p : Parser a) (f : a -> b) = p >> map (first{ Letters } f)
 
 
-many               : (a : *) => Parser a -> Parser [ a ]
+many               : a => Parser a -> Parser [ a ]
 ... (p : Parser a) = (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
 
-some               : (a : *) => Parser a -> Parser [ a ]
+some               : a => Parser a -> Parser [ a ]
 ... (p : Parser a) = p <=> many p >>> uncurry (::{ a })
 
 number : Parser String
@@ -144,13 +144,13 @@ string : String -> Parser String
                ... [{ String }]                        = succeed $$
                ... ((x : String) :: (xs : [ String ])) = literal x <=> core xs >>> uncurry (#)
 
-==>                                 : (a, b : *) => Parser a -> Parser b -> Parser b
+==>                                 : (a, b) => Parser a -> Parser b -> Parser b
 ... (p1 : Parser a) (p2 : Parser b) = p1 <=> p2 >>> snd{ a, b }
 
-<==                                 : (a, b : *) => Parser a -> Parser b -> Parser a
+<==                                 : (a, b) => Parser a -> Parser b -> Parser a
 ... (p1 : Parser a) (p2 : Parser b) = p1 <=> p2 >>> fst{ a, b }
 
-return                     : (a, b : *) => Parser a -> b -> Parser b
+return                     : (a, b) => Parser a -> b -> Parser b
 ... (p : Parser a) (v : b) = p >>> const{ a } v
 
 
@@ -229,14 +229,14 @@ read-eval-print  : String -> ()
                                           print ($eval:   `$ # show (eval-expr e) # $`.$)
                      Nothing{ Expr }   ->  print $PARSE FAILURE!$
 
-wrap-parser        : (a : *) => Parser a -> Letters -> [ a ]
+wrap-parser        : a => Parser a -> Letters -> [ a ]
 ... (p : Parser a) = p >>
                        filter (snd{ a, Letters } >>
                                ([{ Letter }] == _)
                               ) >>
                        map fst{ a, Letters }
 
-wrap-parser-unique                 : (a : *) => Parser a -> Letters -> Maybe a
+wrap-parser-unique                 : a => Parser a -> Letters -> Maybe a
 ... (p : Parser a) (inp : Letters) = case wrap-parser p inp
                                        ((v : a) :: [{ a }]) -> Just v
                                        (_ : [ a ])          -> Nothing{ a }

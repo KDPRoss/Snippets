@@ -32,17 +32,17 @@ typedef Letter  = String
 
 typedef Letters = [ Letter ]
 
-typedef Parser  = (result : *) => Letters -> [ (result, Letters) ]
+typedef Parser  = result => Letters -> [ (result, Letters) ]
 
 
 -- ===== Primitive Parsers (§2.1) ===== --
 
-succeed : (result : *) => result -> Parser result =
-  (result : *) =>
+succeed : result => result -> Parser result =
+  result =>
     (v : result) | (inp : Letters) ~ [ (v, inp) ]
 
-fail-parse : (result : *) => Parser result =
-  (result : *) =>
+fail-parse : result => Parser result =
+  result =>
     const{ Letters } [{ (result, Letters) }]
 
 satisfy : (Letter -> Bool) -> Parser Letter =
@@ -62,8 +62,8 @@ mixfix 100 _ || _
 
 │ `alt` from Hutton's implementation.
 
-|| : (a : *) => Parser a -> Parser a -> Parser a =
-  (a : *) =>
+|| : a => Parser a -> Parser a -> Parser a =
+  a =>
     (p1 : Parser a) | (p2 : Parser a) ~
       (inp : Letters) ~ p1 inp ++ p2 inp
 
@@ -71,8 +71,8 @@ mixfix 110 _ <=> _
 
 │ `then` from Hutton's implementation; η-reduced.
 
-<=> : (a, b : *) => Parser a -> Parser b -> Parser (a, b) =
-  (a, b : *) =>
+<=> : (a, b) => Parser a -> Parser b -> Parser (a, b) =
+  (a, b) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 >>
       concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
@@ -87,17 +87,17 @@ mixfix 80 _ >>> _
 
 │ `using` from Hutton's implementation.
 
->>> : (a, b : *) => Parser a -> (a -> b) -> Parser b =
-  (a, b : *) =>
+>>> : (a, b) => Parser a -> (a -> b) -> Parser b =
+  (a, b) =>
     (p : Parser a) | (f : a -> b) ~
       p >> map (first{ Letters } f)
 
-many : (a : *) => Parser a -> Parser [ a ] =
-  (a : *) =>
+many : a => Parser a -> Parser [ a ] =
+  a =>
     (p : Parser a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
 
-some : (a : *) => Parser a -> Parser [ a ] =
-  (a : *) =>
+some : a => Parser a -> Parser [ a ] =
+  a =>
     (p : Parser a) ~
       p <=> many p >>> uncurry (::{ a })
 
@@ -118,22 +118,22 @@ string : String -> Parser String =
 
 mixfix 110 _ ==> _
 
-==> : (a, b : *) => Parser a -> Parser b -> Parser b =
-  (a, b : *) =>
+==> : (a, b) => Parser a -> Parser b -> Parser b =
+  (a, b) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 <=> p2 >>> snd{ a, b }
 
 mixfix 110 _ <== _
 
-<== : (a, b : *) => Parser a -> Parser b -> Parser a =
-  (a, b : *) =>
+<== : (a, b) => Parser a -> Parser b -> Parser a =
+  (a, b) =>
     (p1 : Parser a) | (p2 : Parser b) ~
       p1 <=> p2 >>> fst{ a, b }
 
 mixfix 80 _ return _
 
-return : (a, b : *) => Parser a -> b -> Parser b =
-  (a, b : *) =>
+return : (a, b) => Parser a -> b -> Parser b =
+  (a, b) =>
     (p : Parser a) | (v : b) ~ p >>> const{ a } v
 
 
@@ -217,8 +217,8 @@ read-eval-print : String -> () =
                                   (Nothing{ Expr } ~ print $PARSE FAILURE!$)
     in ()
 
-wrap-parser : (a : *) => Parser a -> Letters -> [ a ] =
-  (a : *) =>
+wrap-parser : a => Parser a -> Letters -> [ a ] =
+  a =>
     (p : Parser a) ~
       p >>
       filter (snd{ a, Letters } >>
@@ -226,8 +226,8 @@ wrap-parser : (a : *) => Parser a -> Letters -> [ a ] =
              ) >>
       map fst{ a, Letters }
 
-wrap-parser-unique : (a : *) => Parser a -> Letters -> Maybe a =
-  (a : *) =>
+wrap-parser-unique : a => Parser a -> Letters -> Maybe a =
+  a =>
     (p : Parser a) | (inp : Letters) ~
       case wrap-parser p inp of
       ((v : a) :: [{ a }] ~ Just v)
