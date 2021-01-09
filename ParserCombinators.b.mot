@@ -76,12 +76,12 @@ mixfix 80 _ return _
 
 typedef Letter  = String
 typedef Letters = [ Letter ]
-typedef Parser  = (result : *) => Letters -> [ (result, Letters) ]
+typedef Parser  = result => Letters -> [ (result, Letters) ]
 
 
 -- ===== Primitive Parsers (§2.1) ===== --
 
-succeed                          : (result : *) => result -> Parser result
+succeed                          : result => result -> Parser result
 ... (v : result) (inp : Letters) = [ (v, inp) ]
 
 fail-parse : result => Parser result
