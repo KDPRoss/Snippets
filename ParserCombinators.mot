@@ -4,7 +4,7 @@
 │ Parser combinators in Motmot based on those from      │
 │ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
 │                                                       │
-│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>         │
+│ Copyright 2020-2020 K.D.P.Ross <KDPRoss@gmail.com>    │
 │                                                       │
 │ This code is licensed only for study and personal     │
 │ enrichment.                                           │
@@ -32,27 +32,27 @@ typedef Letter  = String
 
 typedef Letters = [ Letter ]
 
-typedef Parser  = result => Letters -> [ (result, Letters) ]
+typedef Parse   = result => Letters -> [ (result, Letters) ]
 
 
 -- ===== Primitive Parsers (§2.1) ===== --
 
-succeed : result => result -> Parser result =
+succeed : result => result -> Parse result =
   result =>
     (v : result) | (inp : Letters) ~ [ (v, inp) ]
 
-fail-parse : result => Parser result =
+fail-parse : result => Parse result =
   result =>
     const{ Letters } [{ (result, Letters) }]
 
-satisfy : (Letter -> Bool) -> Parser Letter =
+satisfy : (Letter -> Bool) -> Parse Letter =
   (p : Letter -> Bool) ~
     case of
     ([{ Letter }]                             ~ [{ (Letter, Letters) }])
     (((x : Letter) and {p}) :: (xs : Letters) ~ succeed x xs)
     fail-parse{ Letter }
 
-literal : Letter -> Parser Letter =
+literal : Letter -> Parse Letter =
   (x : Letter) ~ satisfy (x == _)
 
 
@@ -62,22 +62,23 @@ mixfix 100 _ || _
 
 │ `alt` from Hutton's implementation.
 
-|| : a => Parser a -> Parser a -> Parser a =
+|| : a => Parse a -> Parse a -> Parse a =
   a =>
-    (p1 : Parser a) | (p2 : Parser a) ~
+    (p1 : Parse a) | (p2 : Parse a) ~
       (inp : Letters) ~ p1 inp ++ p2 inp
 
 mixfix 110 _ <=> _
 
 │ `then` from Hutton's implementation; η-reduced.
 
-<=> : (a, b) => Parser a -> Parser b -> Parser (a, b) =
+<=> : (a, b) => Parse a -> Parse b -> Parse (a, b) =
   (a, b) =>
-    (p1 : Parser a) | (p2 : Parser b) ~
+    (p1 : Parse a) | (p2 : Parse b) ~
       p1 >>
-      concat-map (((v1 : a), (out1 : Letters)) ~ out1 |>
-                                                   p2 >>
-                                                   map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
+      concat-map (((v1 : a), (out1 : Letters)) ~
+                    out1 |>
+                      p2 >>
+                      map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
                  )
 
 
@@ -87,54 +88,55 @@ mixfix 80 _ >>> _
 
 │ `using` from Hutton's implementation.
 
->>> : (a, b) => Parser a -> (a -> b) -> Parser b =
+>>> : (a, b) => Parse a -> (a -> b) -> Parse b =
   (a, b) =>
-    (p : Parser a) | (f : a -> b) ~
+    (p : Parse a) | (f : a -> b) ~
       p >> map (first{ Letters } f)
 
-many : a => Parser a -> Parser [ a ] =
+many : a => Parse a -> Parse [ a ] =
   a =>
-    (p : Parser a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
+    (p : Parse a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
 
-some : a => Parser a -> Parser [ a ] =
+some : a => Parse a -> Parse [ a ] =
   a =>
-    (p : Parser a) ~
+    (p : Parse a) ~
       p <=> many p >>> uncurry (::{ a })
 
-number : Parser String =
+number : Parse String =
   some (satisfy digit) >>> implode
   where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
 
-word : Parser String =
+word : Parse String =
   some (satisfy letter) >>> implode
   where (letter : String -> Bool) = lowercase >>
                                     ($a$ =< _) and^ (_ =< $z$)
 
-string : String -> Parser String =
+string : String -> Parse String =
   explode >> core
-  where (core : [ String ] -> Parser String) = case of
-                                               ([{ String }]                      ~ succeed $$)
-                                               ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
+  where (core : [ String ] -> Parse String) =
+          case of
+          ([{ String }]                      ~ succeed $$)
+          ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
 
 mixfix 110 _ ==> _
 
-==> : (a, b) => Parser a -> Parser b -> Parser b =
+==> : (a, b) => Parse a -> Parse b -> Parse b =
   (a, b) =>
-    (p1 : Parser a) | (p2 : Parser b) ~
+    (p1 : Parse a) | (p2 : Parse b) ~
       p1 <=> p2 >>> snd{ a, b }
 
 mixfix 110 _ <== _
 
-<== : (a, b) => Parser a -> Parser b -> Parser a =
+<== : (a, b) => Parse a -> Parse b -> Parse a =
   (a, b) =>
-    (p1 : Parser a) | (p2 : Parser b) ~
+    (p1 : Parse a) | (p2 : Parse b) ~
       p1 <=> p2 >>> fst{ a, b }
 
 mixfix 80 _ return _
 
-return : (a, b) => Parser a -> b -> Parser b =
+return : (a, b) => Parse a -> b -> Parse b =
   (a, b) =>
-    (p : Parser a) | (v : b) ~ p >>> const{ a } v
+    (p : Parse a) | (v : b) ~ p >>> const{ a } v
 
 
 -- ========== Example Expression Language (§2.4) ========== --
@@ -164,17 +166,17 @@ axiom Div  : Expr -> Expr -> Expr
 │ `$2+3+4$`; this was handled by Hutton's code in the
 │ video.
 
-expn : Parser Expr =
+expn : Parse Expr =
   (term <== literal $+$ <=> ((inp : Letters) ~ expn inp) >>> plus) ||
     ((inp : Letters) ~ (term <== literal $-$ <=> term >>> minus) inp) ||
     ((inp : Letters) ~ term inp)
 
-term : Parser Expr =
+term : Parse Expr =
   (factor <== literal $*$ <=> ((inp : Letters) ~ term inp) >>> times) ||
     ((inp : Letters) ~ (factor <== literal $/$ <=> factor >>> divide) inp) ||
     ((inp : Letters) ~ factor inp)
 
-factor : Parser Expr =
+factor : Parse Expr =
   (number >>> value) ||
     ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
 
@@ -217,18 +219,18 @@ read-eval-print : String -> () =
                                   (Nothing{ Expr } ~ print $PARSE FAILURE!$)
     in ()
 
-wrap-parser : a => Parser a -> Letters -> [ a ] =
+wrap-parser : a => Parse a -> Letters -> [ a ] =
   a =>
-    (p : Parser a) ~
+    (p : Parse a) ~
       p >>
       filter (snd{ a, Letters } >>
-                ([{ Letter }] == _)
+              ([{ Letter }] == _)
              ) >>
       map fst{ a, Letters }
 
-wrap-parser-unique : a => Parser a -> Letters -> Maybe a =
+wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
   a =>
-    (p : Parser a) | (inp : Letters) ~
+    (p : Parse a) | (inp : Letters) ~
       case wrap-parser p inp of
       ((v : a) :: [{ a }] ~ Just v)
       ((_ : [ a ])        ~ Nothing{ a })
@@ -281,3 +283,45 @@ wrap-parser-unique : a => Parser a -> Letters -> Maybe a =
 -- PRINT input:  `(2+3`.
 -- PRINT PARSE FAILURE!
 -- linearised: ()
+
+
+
+-- ===== Native Version ===== --
+
+#load $Parser$
+
+│ Motmot exposes its own parser combinators (i.e., those
+│ used to parse Motmot itself) as a library; let's rewrite
+│ the above parser using those. (Unsurprisingly (?), there's
+│ more than a passing resemblance.)
+
+module NativeParser {
+  read-expn : String -> Expr =
+    run (delay expn)
+    using Prelude.Parser{ delay, run }
+| expn : () -> Parser Expr = () ~
+    plus ||| minus ||| delay term
+    where (plus : Parser Expr)  = delay term <== txt $+$ <=> delay expn >>> uncurry Add
+        | (minus : Parser Expr) = delay term <== txt $-$ <=> delay expn >>> uncurry Sub
+    using Prelude.Parser{
+      <==, <=>, >>>, |||,
+      delay, txt
+    }
+| term : () -> Parser Expr = () ~
+    times ||| divide ||| factor
+    where (times : Parser Expr)  = factor <== txt $*$ <=> delay term >>> uncurry Mul
+        | (divide : Parser Expr) = factor <== txt $/$ <=> delay term >>> uncurry Div
+    using Prelude.Parser{
+      <==, <=>, >>>, |||,
+      delay, txt
+    }
+| factor : Parser Expr =
+    number >>> Num
+    using Prelude.Parser{ >>> }
+| number : Parser Num =
+    rexp $[0-9]+$ >>> read{ Num }
+    using Prelude.Parser{
+      >>>,
+      rexp
+    }
+}

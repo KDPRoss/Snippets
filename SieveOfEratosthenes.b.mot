@@ -31,8 +31,7 @@
 │ Hutton's code:
 │ primes = sieve [2..]
 
-primes : Stream Num
-...    = sieve { 2 .. }
+(primes : Stream Num) = sieve { 2 .. }
 
 │ Hutton's code:
 │ sieve (p : ps) = p : sieve [ x | x <- ps, mod x p /= 0 ]
