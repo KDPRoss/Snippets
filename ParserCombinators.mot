@@ -297,23 +297,23 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 
 module NativeParser {
   read-expn : String -> Expr =
-    run (delay expn)
-    using Prelude.Parser{ delay, run }
-| expn : () -> Parser Expr = () ~
-    plus ||| minus ||| delay term
-    where (plus : Parser Expr)  = delay term <== txt $+$ <=> delay expn >>> uncurry Add
-        | (minus : Parser Expr) = delay term <== txt $-$ <=> delay expn >>> uncurry Sub
+    run (delayed expn)
+    using Prelude.Parser{ delayed, run }
+| expn : ParserLazy Expr =
+    lazy-parse plus ||| minus ||| delayed term
+    where (plus : Parser Expr)  = delayed term <== txt $+$ <=> delayed expn >>> uncurry Add
+        | (minus : Parser Expr) = delayed term <== txt $-$ <=> delayed expn >>> uncurry Sub
     using Prelude.Parser{
       <==, <=>, >>>, |||,
-      delay, txt
+      delayed, txt
     }
-| term : () -> Parser Expr = () ~
-    times ||| divide ||| factor
-    where (times : Parser Expr)  = factor <== txt $*$ <=> delay term >>> uncurry Mul
-        | (divide : Parser Expr) = factor <== txt $/$ <=> delay term >>> uncurry Div
+| term : ParserLazy Expr =
+    lazy-parse times ||| divide ||| factor
+    where (times : Parser Expr)  = factor <== txt $*$ <=> delayed term >>> uncurry Mul
+        | (divide : Parser Expr) = factor <== txt $/$ <=> delayed term >>> uncurry Div
     using Prelude.Parser{
       <==, <=>, >>>, |||,
-      delay, txt
+      delayed, txt
     }
 | factor : Parser Expr =
     number >>> Num
