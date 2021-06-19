@@ -208,13 +208,13 @@ eval-expr : Expr -> Num =
 
 read-eval-print : String -> () =
   (s : String) ~
-    let strict ()               = print ($input:  `$ # s # $`.$)
+    let strict ()               = print $input:  `#{s}`.$
              | (e : Maybe Expr) = s |>
                                     explode >>
                                     wrap-parser-unique expn
              | ()               = case e of
-                                  (Just (e : Expr) ~ let strict () = print ($parsed: `$ # show e # $`.$) in
-                                                     print ($eval:   `$ # show (eval-expr e) # $`.$)
+                                  (Just (e : Expr) ~ let strict () = print $parsed: `#{e}`.$ in
+                                                     print $eval:   `#{eval-expr e}`.$
                                   )
                                   (Nothing{ Expr } ~ print $PARSE FAILURE!$)
     in ()

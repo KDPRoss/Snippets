@@ -221,12 +221,12 @@ eval-expr                        : Expr -> Num
 -- ===== Interpreter ===== --
 
 read-eval-print  : String -> ()
-... (s : String) = print ($input:  `$ # s # $`.$)
+... (s : String) = print $input:  `#{s}`.$
                    case s |>
                           explode >>
                           wrap-parser-unique expn
-                     (Just (e : Expr)) -> print ($parsed: `$ # show e # $`.$)
-                                          print ($eval:   `$ # show (eval-expr e) # $`.$)
+                     (Just (e : Expr)) -> print $parsed: `#{e}`.$
+                                          print $eval:   `#{eval-expr e}`.$
                      Nothing{ Expr }   ->  print $PARSE FAILURE!$
 
 wrap-parser        : a => Parser a -> Letters -> [ a ]
