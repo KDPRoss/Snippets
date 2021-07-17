@@ -45,7 +45,7 @@ _ = (sq-list [ 2, 4 ], comp-list [ True, False ])
               (l : [ a ])       then l
                                 else f (head l) :: my-map f (tail l)
           sq-list          : [ Num ] -> [ Num ]
-          ...              = my-map (_ pow 2)
+          ...              = my-map (_ ^ 2)
           comp-list        : [ Bool ] -> [ Bool ]
           ...              = my-map not
 
@@ -57,7 +57,7 @@ _ = (sq-list [ 2, 4 ], comp-list [ True, False ])
                                [{ a }]     -> [{ a }]
                                (l : [ a ]) -> f (head l) :: my-map f (tail l)
           sq-list          : [ Num ] -> [ Num ]
-          ...              = my-map (_ pow 2)
+          ...              = my-map (_ ^ 2)
           comp-list        : [ Bool ] -> [ Bool ]
           ...              = my-map not
 
@@ -116,9 +116,9 @@ _ = map'' map' [ [ 1, 2 ], [ 3, 4 ] ]
           ...                                = map{ a, b }
           map''                              : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ]
           ... (f : (a, b) =>                 = fun
-                 (a -> b) -> [ a ] -> [ b ])     [ [{ a }] ]                  -> [{ [ a ] }]
-                                                 ([{ a }] :: (_ : [ [ a ] ])) -> [{ [ a ] }]
-                                                 (l : [ [ a ] ])              -> f head{ a } l :: map'' f (f tail{ a } l)
+                 (a -> b) -> [ a ] -> [ b ])     ([ [{ a }] ] or                -> [{ [ a ] }]
+                                                  ([{ a }] :: (_ : [ [ a ] ])))
+                                                 (l : [ [ a ] ])                -> f head{ a } l :: map'' f (f tail{ a } l)
 
 
 │ ‘Collect’ (§5.1)
@@ -137,7 +137,7 @@ _ = collect (Node 3 (Node (Node 4 Empty{ T Num }) Empty{ T (T Num) }))
 _ = collect (Node 3 (Node (Node 4 Empty{ T Num }) Empty{ T (T Num) }))
     where collect                            : a => T a -> [ a ]
           ... Empty{ a }                     = [{ a }]
-          ... ((Node (n : a) (t : T (T a)))) = n :: (concat-map collect{ a } (collect t))
+          ... ((Node (n : a) (t : T (T a)))) = n :: concat-map collect{ a } (collect t)
 
 
 │ ‘BAR’ (§5.2)

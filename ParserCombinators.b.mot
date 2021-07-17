@@ -64,6 +64,7 @@
 
 -- ========== Mixfix Syntax Setup ========== --
 
+mixfix level 80 nonassoc
 mixfix 100 _ || _
 mixfix 110 _ <=> _
 mixfix 80  _ >>> _

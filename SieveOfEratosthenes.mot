@@ -39,7 +39,7 @@ primes : Stream Num =
 
 sieve : Stream Num -> Stream Num =
   (p : Num) ::: (ps : Stream Num) ~
-    (() ~ p) ::: (() ~ sieve { x | (x : Num) <- ps, x mod p =/= 0 })
+    (() ~ p) ::: (() ~ sieve { x | (x : Num) <- ps, 0 =/= x mod p })
 
 │ Here, we have a somewhat different approach to the `twin`
 │ function: The idiomatic Motmot is point-free. As well,

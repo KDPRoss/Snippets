@@ -84,6 +84,7 @@ mixfix 110 _ <=> _
 
 -- ===== Manipulating Values (§2.3) ===== --
 
+mixfix level 80 nonassoc
 mixfix 80 _ >>> _
 
 │ `using` from Hutton's implementation.
