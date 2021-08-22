@@ -62,7 +62,7 @@ new data Work  = Row Num
                  Col Num
                  Sub Position
 
-??  : Value
+??? : Value
 ... = nums |>
         make-set >>
         Choice
@@ -110,7 +110,7 @@ defaultSquare : Square
 getVal           : Square -> Position -> Value
 ... (Square f) p = case f >+> p
                      Just v  -> v
-                     Nothing -> ??
+                     Nothing -> ???
 
 setVal             : Square -> Position -> Value -> Square
 ... (Square f) p v = Square (f <+> p |-> v')
@@ -468,7 +468,7 @@ parse : [ String ] -> Square
                map parseChar
             ) >>
           buildSquare
-        where parseChar "_" = ??
+        where parseChar "_" = ???
               ...       c   = Known (read c : Num)
 
 
