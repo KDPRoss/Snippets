@@ -29,9 +29,7 @@
 -- ========== The Combinator Library ========== --
 
 typedef Letter  = String
-
 typedef Letters = [ Letter ]
-
 typedef Parse   = result => Letters -> [ (result, Letters) ]
 
 
@@ -39,7 +37,8 @@ typedef Parse   = result => Letters -> [ (result, Letters) ]
 
 succeed : result => result -> Parse result =
   result =>
-    (v : result) | (inp : Letters) ~ [ (v, inp) ]
+    (v : result) | (inp : Letters) ~
+      [ (v, inp) ]
 
 fail-parse : result => Parse result =
   result =>
@@ -47,13 +46,14 @@ fail-parse : result => Parse result =
 
 satisfy : (Letter -> Bool) -> Parse Letter =
   (p : Letter -> Bool) ~
-    case of
+    fun
     ([{ Letter }]                             ~ [{ (Letter, Letters) }])
     (((x : Letter) and {p}) :: (xs : Letters) ~ succeed x xs)
     fail-parse{ Letter }
 
 literal : Letter -> Parse Letter =
-  (x : Letter) ~ satisfy (x == _)
+  (x : Letter) ~
+    satisfy (x == _)
 
 
 -- ===== Combinators (§2.2) ===== --
@@ -65,7 +65,8 @@ mixfix 100 _ || _
 || : a => Parse a -> Parse a -> Parse a =
   a =>
     (p1 : Parse a) | (p2 : Parse a) ~
-      (inp : Letters) ~ p1 inp ++ p2 inp
+      (inp : Letters) ~
+        p1 inp ++ p2 inp
 
 mixfix 110 _ <=> _
 
@@ -75,11 +76,12 @@ mixfix 110 _ <=> _
   (a, b) =>
     (p1 : Parse a) | (p2 : Parse b) ~
       p1 >>
-      concat-map (((v1 : a), (out1 : Letters)) ~
-                    out1 |>
-                      p2 >>
-                      map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
-                 )
+      concat-map (
+        ((v1 : a), (out1 : Letters)) ~
+          out1 |>
+            p2 >>
+            map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
+      )
 
 
 -- ===== Manipulating Values (§2.3) ===== --
@@ -92,11 +94,13 @@ mixfix 80 _ >>> _
 >>> : (a, b) => Parse a -> (a -> b) -> Parse b =
   (a, b) =>
     (p : Parse a) | (f : a -> b) ~
-      p >> map (first{ Letters } f)
+      p >>
+      map (first{ Letters } f)
 
 many : a => Parse a -> Parse [ a ] =
   a =>
-    (p : Parse a) ~ (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
+    (p : Parse a) ~
+      (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
 
 some : a => Parse a -> Parse [ a ] =
   a =>
@@ -113,11 +117,12 @@ word : Parse String =
                                     ($a$ =< _) and^ (_ =< $z$)
 
 string : String -> Parse String =
-  explode >> core
-  where (core : [ String ] -> Parse String) =
-          case of
-          ([{ String }]                      ~ succeed $$)
-          ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
+  explode >> (
+    fix (core : [ String ] -> Parse String) ~
+      fun
+      ([{ String }]                      ~ succeed $$)
+      ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
+  )
 
 mixfix 110 _ ==> _
 
@@ -137,7 +142,8 @@ mixfix 80 _ return _
 
 return : (a, b) => Parse a -> b -> Parse b =
   (a, b) =>
-    (p : Parse a) | (v : b) ~ p >>> const{ a } v
+    (p : Parse a) | (v : b) ~
+      p >>> const{ a } v
 
 
 -- ========== Example Expression Language (§2.4) ========== --
@@ -145,15 +151,10 @@ return : (a, b) => Parse a -> b -> Parse b =
 -- ===== Expression Representation ===== --
 
 axiom Expr : *
-
 axiom Num  : Num -> Expr
-
 axiom Add  : Expr -> Expr -> Expr
-
 axiom Sub  : Expr -> Expr -> Expr
-
 axiom Mul  : Expr -> Expr -> Expr
-
 axiom Div  : Expr -> Expr -> Expr
 
 
@@ -182,13 +183,9 @@ factor : Parse Expr =
     ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
 
 value : String -> Expr        = read{ Num } >> Num
-
 plus : (Expr, Expr) -> Expr   = uncurry Add
-
 minus : (Expr, Expr) -> Expr  = uncurry Sub
-
 times : (Expr, Expr) -> Expr  = uncurry Mul
-
 divide : (Expr, Expr) -> Expr = uncurry Div
 
 
@@ -212,21 +209,21 @@ read-eval-print : String -> () =
     let strict ()               = print $input:  `#{s}`.$
              | (e : Maybe Expr) = s |>
                                     explode >>
-                                    wrap-parser-unique expn
-             | ()               = case e of
-                                  (Just (e : Expr) ~ let strict () = print $parsed: `#{e}`.$ in
-                                                     print $eval:   `#{eval-expr e}`.$
-                                  )
-                                  (Nothing{ Expr } ~ print $PARSE FAILURE!$)
-    in ()
+                                    wrap-parser-unique expn in
+    case e of
+    (Just (e : Expr) ~ let strict () = print $parsed: `#{e}`.$ in
+                       print $eval:   `#{eval-expr e}`.$
+    )
+    (Nothing{ Expr } ~ print $PARSE FAILURE!$)
 
 wrap-parser : a => Parse a -> Letters -> [ a ] =
   a =>
     (p : Parse a) ~
       p >>
-      filter (snd{ a, Letters } >>
-              ([{ Letter }] == _)
-             ) >>
+      filter (
+        snd{ a, Letters } >>
+        ([{ Letter }] == _)
+      ) >>
       map fst{ a, Letters }
 
 wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
@@ -284,7 +281,6 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- PRINT input:  `(2+3`.
 -- PRINT PARSE FAILURE!
 -- linearised: ()
-
 
 
 -- ===== Native Version ===== --
