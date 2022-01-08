@@ -5,7 +5,7 @@
 │ ‘Programming Examples Needing Polymorphic Recursion’   │
 │ (J.J.Hallett and A.J.Kfoury, 2004)                     │
 │                                                        │
-│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com>          │
+│ Copyright 2020-2022 K.D.P.Ross <KDPRoss@gmail.com>     │
 │                                                        │
 │ This code is licensed only for study and personal      │
 │ enrichment.                                            │
@@ -53,9 +53,10 @@ _ = (sq-list [ 2, 4 ], comp-list [ True, False ])
 
 _ = (sq-list [ 2, 4 ], comp-list [ True, False ])
     where my-map           : a => (a -> a) -> [ a ] -> [ a ]
-          ... (f : a -> a) = fun
-                               [{ a }]     -> [{ a }]
-                               (l : [ a ]) -> f (head l) :: my-map f (tail l)
+          ... (_ : a -> a) = [{ a }]
+              [{ a }]
+          ... (f : a -> a) = f (head l) :: my-map f (tail l)
+              (l : [ a ])
           sq-list          : [ Num ] -> [ Num ]
           ...              = my-map (_ ^ 2)
           comp-list        : [ Bool ] -> [ Bool ]
@@ -90,8 +91,8 @@ _ = app-comp 5 [ 5 ]
           remove-list                  : a => [ a ] -> a
           ... ((x : a) :: (_ : [ a ])) = x
           comp                         : (a, b, c) => (b -> c) -> (a -> b) -> a -> c
-          ... (g : b -> c)             = f >> g
-              (f : a -> b)
+          ... (g : b -> c)             = f >>
+              (f : a -> b)               g
           app-comp                     : a => a -> [ a ] -> Bool
           ... (x : a)                  = comp remove-list{ a } create-list{ a } x == head (comp create-list{ a } remove-list{ a } xs)
               (xs : [ a ])
@@ -103,11 +104,11 @@ _ = map'' map' [ [ 1, 2 ], [ 3, 4 ] ]
     where map'                               : (a, b) => (a -> b) -> [ a ] -> [ b ]
           ...                                = map{ a, b }
           map''                              : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ]
-          ... (f : (a, b) =>                 = if empty? l
-                 (a -> b) -> [ a ] -> [ b ])      then [{ [ a ] }]
-              (l : [ [ a ] ])                     else if empty? (head l)
-                                                          then [{ [ a ] }]
-                                                          else f head{ a } l :: map'' f (f tail{ a } l)
+          ... (f : (a, b) =>                 = cases
+                 (a -> b) -> [ a ] -> [ b ])     empty? l        -> [{ [ a ] }]
+              (l : [ [ a ] ])                    empty? (head l) -> [{ [ a ] }]
+                                                 _               -> f head{ a } l :: map'' f (f tail{ a } l)
+
 
 │ Here's a more Motmotastic pattern-matching version:
 
@@ -115,10 +116,13 @@ _ = map'' map' [ [ 1, 2 ], [ 3, 4 ] ]
     where map'                               : (a, b) => (a -> b) -> [ a ] -> [ b ]
           ...                                = map{ a, b }
           map''                              : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ]
-          ... (f : (a, b) =>                 = fun
-                 (a -> b) -> [ a ] -> [ b ])     ([ [{ a }] ] or                -> [{ [ a ] }]
-                                                  ([{ a }] :: (_ : [ [ a ] ])))
-                                                 (l : [ [ a ] ])                -> f head{ a } l :: map'' f (f tail{ a } l)
+          ... (_ : (a, b) =>                 = [{ [ a ] }]
+                 (a -> b) -> [ a ] -> [ b ])
+              ([ [{ a }] ] or
+               ([{ a }] :: (_ : [ [ a ] ])))
+          ... (f : (a, b) =>                 = f head{ a } l :: map'' f (f tail{ a } l)
+                 (a -> b) -> [ a ] -> [ b ])
+              (l : [ [ a ] ])
 
 
 │ ‘Collect’ (§5.1)

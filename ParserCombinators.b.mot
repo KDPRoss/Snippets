@@ -4,7 +4,7 @@
 │ Parser combinators in Motmot based on those from      │
 │ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
 │                                                       │
-│ Copyright 2020-2021 K.D.P.Ross <KDPRoss@gmail.com>    │
+│ Copyright 2020-2022 K.D.P.Ross <KDPRoss@gmail.com>    │
 │                                                       │
 │ This code is licensed only for study and personal     │
 │ enrichment.                                           │
@@ -113,8 +113,9 @@ literal          : Letter -> Parser Letter
 │ `then` from Hutton's implementation; η-reduced.
 
 <=>                 : (a, b) => Parser a -> Parser b -> Parser (a, b)
-... (p1 : Parser a) = p1 >> concat-map core
-    (p2 : Parser b)   where core                   : (a, Letters) -> [ ((a, b), Letters) ]
+... (p1 : Parser a) = p1 >>
+    (p2 : Parser b)   concat-map core
+                      where core                   : (a, Letters) -> [ ((a, b), Letters) ]
                             ... ((v1 : a),         = out1 |>
                                  (out1 : Letters))     p2 >>
                                                        map (((v2 : b), (out2 : Letters)) ~ ((v1, v2), out2))
@@ -125,8 +126,8 @@ literal          : Letter -> Parser Letter
 │ `using` from Hutton's implementation.
 
 >>>                : (a, b) => Parser a -> (a -> b) -> Parser b
-... (p : Parser a) = p >> map (first{ Letters } f)
-    (f : a -> b)
+... (p : Parser a) = p >>
+    (f : a -> b)     map (first{ Letters } f)
 
 many               : a => Parser a -> Parser [ a ]
 ... (p : Parser a) = (p <=> ((inp : Letters) ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
@@ -136,16 +137,17 @@ some               : a => Parser a -> Parser [ a ]
 
 number : Parser String
 ...    = some (satisfy digit) >>> implode
-         where digit : String -> Bool
-               ...   = ($0$ =< _) and^ (_ =< $9$)
+         where digit            : String -> Bool
+               ... (c : String) = $0$ =< c =< $9$
 
 word : Parser String
 ...  = some (satisfy letter) >>> implode
-       where letter : String -> Bool
-             ...    = lowercase >> ($a$ =< _) and^ (_ =< $z$)
+       where letter           : String -> Bool
+             ... (c : String) = $a$ =< lowercase c =< $z$
 
 string : String -> Parser String
-...    = explode >> core
+...    = explode >>
+         core
          where core                                    : [ String ] -> Parser String
                ... [{ String }]                        = succeed $$
                ... ((x : String) :: (xs : [ String ])) = literal x <=> core xs >>> uncurry (#)
@@ -178,7 +180,7 @@ new data Expr = Num Num
 
 │ The η-expansion is necessary here because we're of
 │ applicative-order (rather than lazy) evaluation; this
-│ stuff always looks better in Haskell (or Miranda)!
+│ stuff always looks better in Haskell or Miranda.
 
 │ Diverge a bit from the paper here to allow things like
 │ `$2+3+4$`; this was handled by Hutton's code in the
@@ -186,17 +188,17 @@ new data Expr = Num Num
 
 expn : Parser Expr
 ...  = (term <== literal $+$ <=> ((inp : Letters) ~ expn inp) >>> plus) ||
-         ((inp : Letters) ~ (term <== literal $-$ <=> term >>> minus) inp) ||
-         ((inp : Letters) ~ term inp)
+       ((inp : Letters) ~ (term <== literal $-$ <=> term >>> minus) inp) ||
+       ((inp : Letters) ~ term inp)
 
 term : Parser Expr
 ...  = (factor <== literal $*$ <=> ((inp : Letters) ~ term inp) >>> times) ||
-         ((inp : Letters) ~ (factor <== literal $/$ <=> factor >>> divide) inp) ||
-         ((inp : Letters) ~ factor inp)
+       ((inp : Letters) ~ (factor <== literal $/$ <=> factor >>> divide) inp) ||
+       ((inp : Letters) ~ factor inp)
 
 factor : Parser Expr
 ...    = (number >>> value) ||
-           ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
+         ((inp : Letters) ~ (literal $($ ==> expn <== literal $)$) inp)
 
 (value : String -> Expr)        = read{ Num } >> Num
 (plus : (Expr, Expr) -> Expr)   = uncurry Add
@@ -220,25 +222,25 @@ eval-expr                        : Expr -> Num
 -- ===== Interpreter ===== --
 
 read-eval-print  : String -> ()
-... (s : String) = print $input:  `#{s}`.$
+... (s : String) = let strict () = print $input:  `#{s}`.$
                    case s |>
                           explode >>
                           wrap-parser-unique expn
-                     (Just (e : Expr)) -> print $parsed: `#{e}`.$
+                     (Just (e : Expr)) -> let strict () = print $parsed: `#{e}`.$
                                           print $eval:   `#{eval-expr e}`.$
                      Nothing{ Expr }   -> print $PARSE FAILURE!$
 
 wrap-parser        : a => Parser a -> Letters -> [ a ]
 ... (p : Parser a) = p >>
-                       filter (snd{ a, Letters } >>
-                               ([{ Letter }] == _)
-                              ) >>
-                       map fst{ a, Letters }
+                     filter (snd{ a, Letters } >>
+                             ([{ Letter }] == _)
+                            ) >>
+                     map fst{ a, Letters }
 
 wrap-parser-unique  : a => Parser a -> Letters -> Maybe a
 ... (p : Parser a)  = case wrap-parser p inp
-    (inp : Letters)     ((v : a) :: [{ a }]) -> Just v
-                        (_ : [ a ])          -> Nothing{ a }
+    (inp : Letters)     [ (v : a) ] -> Just v
+                        (_ : [ a ]) -> Nothing{ a }
 
 
 -- ===== Examples ==== --

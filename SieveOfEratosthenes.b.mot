@@ -1,16 +1,16 @@
 #MotmotB
 
-┌───────────────────────────────────────────────┐
-│ Sieve of Eratosthenes & Twin Primes in Motmot │
-│                                               │
-│ Based upon ‘Infinite Data Structures’         │
-│ with Graham Hutton                            │
-│                                               │
-│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com> │
-│                                               │
-│ This code is licensed only for study and      │
-│ personal enrichment.                          │
-└───────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│ Sieve of Eratosthenes & Twin Primes in Motmot      │
+│                                                    │
+│ Based upon ‘Infinite Data Structures’              │
+│ with Graham Hutton                                 │
+│                                                    │
+│ Copyright 2020-2022 K.D.P.Ross <KDPRoss@gmail.com> │
+│                                                    │
+│ This code is licensed only for study and           │
+│ personal enrichment.                               │
+└────────────────────────────────────────────────────┘
 
 
 │ Relevant resources:
@@ -53,4 +53,5 @@ twin-primes : Stream (Num, Num)
                 zip-stream primes >>
                 filter-stream twin
               where twin : (Num, Num) -> Bool
-                    ...  = first{ Num } (2 + _) >> uncurry (=={ Num })
+                    ...  = first{ Num } (2 + _) >>
+                           uncurry (=={ Num })
