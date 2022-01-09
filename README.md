@@ -55,6 +55,13 @@ are not available for anyone's use other than mine.
   with some comments comparing the Miranda implementation
   from that paper.
 
+* [ParserCombinators.d.mot](ParserCombinators.d.mot):
+  ‘Motmot-D’-syntax (This is a CamlTrax-inspired
+  indentation-sensitive variation of the ‘Motmot-A’ syntax
+  which allows omitting numerous ‘administrative’ tokens and
+  bracketing to establish the nesting of control
+  structures.)
+
 * [ParserCombinators.b.mot](ParserCombinators.b.mot):
   ‘Motmot-B’-syntax (This is block-based, two-dimensional
   syntax, like Tanager's.) version of the same code.
