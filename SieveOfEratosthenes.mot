@@ -1,16 +1,16 @@
-#Motmot
+#MotmotA
 
-┌───────────────────────────────────────────────┐
-│ Sieve of Eratosthenes & Twin Primes in Motmot │
-│                                               │
-│ Based upon ‘Infinite Data Structures’         │
-│ with Graham Hutton                            │
-│                                               │
-│ Copyright 2020 K.D.P.Ross <KDPRoss@gmail.com> │
-│                                               │
-│ This code is licensed only for study and      │
-│ personal enrichment.                          │
-└───────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│ Sieve of Eratosthenes & Twin Primes in Motmot      │
+│                                                    │
+│ Based upon ‘Infinite Data Structures’              │
+│ with Graham Hutton                                 │
+│                                                    │
+│ Copyright 2020-2022 K.D.P.Ross <KDPRoss@gmail.com> │
+│                                                    │
+│ This code is licensed only for study and           │
+│ personal enrichment.                               │
+└────────────────────────────────────────────────────┘
 
 
 │ Relevant resources:
