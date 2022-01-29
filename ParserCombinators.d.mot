@@ -301,7 +301,7 @@ module NativeParser {
         | (minus : Parser Expr) = delayed term <== txt $-$ <=> delayed expn >>> uncurry Sub
     using Prelude.Parser{
       <==, <=>, >>>, |||,
-      delayed, txt
+      delayed, txt,
     }
 | term : ParserLazy Expr =
     lazy-parse times ||| divide ||| factor
@@ -309,7 +309,7 @@ module NativeParser {
         | (divide : Parser Expr) = factor <== txt $/$ <=> delayed term >>> uncurry Div
     using Prelude.Parser{
       <==, <=>, >>>, |||,
-      delayed, txt
+      delayed, txt,
     }
 | factor : Parser Expr =
     number >>> Num
@@ -318,6 +318,6 @@ module NativeParser {
     rexp $[0-9]+$ >>> read{ Num }
     using Prelude.Parser{
       >>>,
-      rexp
+      rexp,
     }
 }
