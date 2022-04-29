@@ -70,6 +70,9 @@ are not available for anyone's use other than mine.
   ‘Motmot-B’-syntax (This is block-based, two-dimensional
   syntax, like Tanager's.) version of the same code.
 
+  * ‘B’ syntax is deprecated; this will probably be removed
+    in the future.
+
   * Here is a visualisation of the recursive space
     partitioning used to parse Motmot B (and Tanager);
     colours represent the various classes of syntactic
@@ -83,6 +86,9 @@ are not available for anyone's use other than mine.
 * [PolymorphicRecursion.b.mot](PolymorphicRecursion.b.mot):
   ‘Motmot-B’-syntax examples of polymorphic recursion based
   on Hallett and Kfoury's paper on the topic.
+
+  * ‘B’ syntax is deprecated; this will probably be removed
+    (or translsated to ‘D’ syntax) in the future.
 
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot):
   Generate primes; based on some more code by Hutton,
