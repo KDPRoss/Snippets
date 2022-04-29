@@ -1,0 +1,77 @@
+#MotmotD
+
+#load $Processing.DSL$
+
+input-file : String = $SampleDocument.txt.mot$
+
+processing : MarkdownRewritePack =
+  markdown-base
+  +library Libraries.Syntax.punctuation
+
+basic-processing : () -> () = thunk (
+  processing
+  ->markdown-file-now {
+    input-file,
+    output-file ~ rr $[.].*$ $.basic.md$ input-file,
+  }
+)
+
+cached-processing : () -> () = thunk (
+  processing
+  +cache-file $Markdown.process-line.mot.cache$
+  ->markdown-file-now {
+    input-file,
+    output-file ~ rr $[.].*$ $.cached.md$ input-file,
+  }
+)
+
+-- (These libraries are already loaded by the DSL, but it's
+-- good practice to do so explicitly here since we're
+-- directly referring to their bindings (and so that we
+-- don't rely on internal implementation details of the
+-- DSL).)
+#load [
+  $Document.Rendering$,
+  $Document.Structure$,
+  $Processing.Text$,
+]
+
+custom-processing : () -> () = thunk (
+  input-file |>
+    read-file-progress-stream >>
+    -- Preprocessing: Remove comments, do some arbitrary demo
+    -- step, group in paragraphs.
+    Processing.Text.strip-comments >>
+    -- Somewhat arbitrarily, remove all source-file lines
+    -- containing the string `nunc`.
+    filter-stream (
+      lowercase >>
+      mr $nunc$ >>
+      not
+    ) >> Processing.Text.paragraphs >>
+    map-stream capitalise >>
+    -- Apply the slightly-customised processing, respecting the
+    -- TML-encoded document structure.
+    Processing.Text.parse-and-process process-line >>
+    -- Render back to text and apply minor postprocessing.
+    Document.Rendering.markdown render-settings ->r render-stream >>
+    Document.Structure.compress-blanks-string >>
+    write-file-stream output-file
+)
+where (process-line : String -> String)         = -- Use the common processing but remove the title.
+                                                  processing
+                                                  +trees [
+                                                    {[[Centre]] ---} ~ Fake!
+                                                  ]
+                                                  -- Can't share the cache with `cached-processing`, since
+                                                  -- they're doing different things.
+                                                  +cache-file $Markdown.process-line-custom.mot.cache$
+                                                  ->string ()
+    | (render-settings : RenderMarkdownOptions) = -- Take rendering defaults but increase wrapping column.
+                                                  { Document.Rendering.Settings.Markdown.defaults...,
+                                                    wrap-width ~ 80,
+                                                  }
+    | (capitalise : String -> String)           = -- Ensure that the first word of each paragraph is
+                                                  -- capitalised.
+                                                  (s : String) ~ $#{s |> take-string 1 >> uppercase}#{drop-string 1 s}$
+    | (output-file : String)                    = rr $[.].*$ $.custom.md$ input-file

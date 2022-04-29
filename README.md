@@ -48,6 +48,10 @@ are not available for anyone's use other than mine.
 
 ## Motmot Highlights
 
+* [Text Processing
+  Demonstration](text-processing/README.md): Demonstration
+  of Motmot's text-processing library.
+
 * [ParserCombinators.mot](ParserCombinators.mot):
   ‘Motmot-A’-syntax (This is a simple, one-dimensional
   syntax, like that found in most programming languages.) of
