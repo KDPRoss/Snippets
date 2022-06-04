@@ -1,56 +1,37 @@
 ## Introduction
 
 This repository contains assorted demonstration code in my
-‘flagship’ programming languages—Tanager and Motmot.
+‘flagship’ programming languages—Motmot and Tanager.
 
-Because most people aren't aware, both languages are named
-for neoTropical songbirds: This is a green-headed tanager
-(_Tangara seledon_):
-
-![A pretty tanager.](./images/tanager.jpg)
-
-… and this is a turquoise-browed motmot (_Eumomota
-superciliosa_):
+Because many people are unaware, both languages are named
+for neoTropical songbirds: This is a turquoise-browed motmot
+(_Eumomota superciliosa_):
 
 ![A pretty motmot.](./images/motmot.jpg)
 
-Tanager has been under development, in one form or another,
-since 2009 and is currently in maintenance mode; Motmot
-began in 2015, although its implementation started much
-later. Both are functional languages drawing inspiration,
-variously, from Haskell, Miranda, Hope, F#, Scala, and
-Mathematica, inter alia. Both languages are proprietary and
-are not available for anyone's use other than mine.
+… and this is a green-headed tanager (_Tangara seledon_):
 
-## Tanager Highlights
+![A pretty tanager.](./images/tanager.jpg)
 
-* [Factorial.t5](Factorial.t5): Numerous factorial
-  implementations, demonstrating the language's syntactic
-  versatility, ranging from a mutable-reference-based
-  version, to a point-free one, to Peano arithmetic, along
-  with some tests.
-
-* [FizzBuzz.t5](FizzBuzz.t5): A few implementations of the
-  fizzbuzz problem, demonstrating: Predicate patterns,
-  `cases` discrimination, absurd patterns, list ranges,
-  tuple catamorphisms, expression infixation, and generative
-  tuple projection.
-
-* [Mandelbrot.t5](Mandelbrot.t5): Simple text renderer of
-  the Mandelbrot Set, demonstrating: Records and recursive
-  λs.
-
-
-* [Sudoku.t5](Sudoku.t5): A nondeterminism-monad-based
-  (i.e., backtracking) Sudoku solver, demonstrating:
-  Algebraic data types, list comprehensions, pipeline
-  composition, and mixfix syntax.
+Motmot began in 2015, although its implementation started
+much later; Tanager has been under development, in one form
+or another, since 2009 and is currently in maintenance mode.
+Both are functional languages drawing inspiration,
+variously, from Haskell, Miranda, Hope, F#, Scala, (my
+language) Sisserou, and Wolfram, inter alia. Both languages'
+implementations are proprietary and are not available for
+anyone's use other than mine.
 
 ## Motmot Highlights
 
 * [Text Processing
   Demonstration](text-processing/README.md): Demonstration
   of Motmot's text-processing library.
+
+* [Testing in Motmot](TestingInMotmot.ipynb): Illustration
+  of two styles of test cases in Motmot: Hand-written cases
+  and [QuickCheck](https://en.wikipedia.org/wiki/QuickCheck)
+  properties.
 
 * [ParserCombinators.mot](ParserCombinators.mot):
   ‘Motmot-A’-syntax (This is a simple, one-dimensional
@@ -87,13 +68,34 @@ are not available for anyone's use other than mine.
   ‘Motmot-B’-syntax examples of polymorphic recursion based
   on Hallett and Kfoury's paper on the topic.
 
-  * ‘B’ syntax is deprecated; this will probably be removed
-    (or translsated to ‘D’ syntax) in the future.
-
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot):
   Generate primes; based on some more code by Hutton,
   demonstrating ‘Why Functional Programming Matters’-style
   manipulation of (potentially-)infinite data structures.
+
+## Tanager Highlights
+
+* [Factorial.t5](Factorial.t5): Numerous factorial
+  implementations, demonstrating the language's syntactic
+  versatility, ranging from a mutable-reference-based
+  version, to a point-free one, to Peano arithmetic, along
+  with some tests.
+
+* [FizzBuzz.t5](FizzBuzz.t5): A few implementations of the
+  fizz–buzz problem, demonstrating: Predicate patterns,
+  `cases` discrimination, absurd patterns, list ranges,
+  tuple catamorphisms, expression infixation, and generative
+  tuple projection.
+
+* [Mandelbrot.t5](Mandelbrot.t5): Simple text renderer of
+  the Mandelbrot Set, demonstrating: Records and recursive
+  λs.
+
+
+* [Sudoku.t5](Sudoku.t5): A nondeterminism-monad-based
+  (i.e., backtracking) Sudoku solver, demonstrating:
+  Algebraic data types, list comprehensions, pipeline
+  composition, and mixfix syntax.
 
 ## The Rosetta Stone
 
