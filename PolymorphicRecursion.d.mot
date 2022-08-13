@@ -1,0 +1,186 @@
+#MotmotD
+
+┌────────────────────────────────────────────────────────┐
+│ Polymorphic recursion in Motmot based on examples from │
+│ ‘Programming Examples Needing Polymorphic Recursion’   │
+│ (J.J.Hallett and A.J.Kfoury, 2004)                     │
+│                                                        │
+│ Copyright 2020-2022 K.D.P.Ross <KDPRoss@gmail.com>     │
+│                                                        │
+│ This code is licensed only for study and personal      │
+│ enrichment.                                            │
+└────────────────────────────────────────────────────────┘
+
+
+│ Relevant resources:
+│ - the original paper: tinyurl.com/y49cupss
+
+
+┌──────────────────────────────────────────┐
+│ ‘The raison  d'être  of a program  is to │
+│ be  a  mathematically-elegant  object of │
+│ sublime beauty; it's also pretty cool if │
+│ it  occasionally   computes  something.’ │
+│                             - K.D.P.Ross │
+└──────────────────────────────────────────┘
+
+
+│ ‘Double (Coupled)’ (§3.1.1)
+
+_ = (foo $foo$, goo 1)
+    where (double : a => (a -> a) -> a -> a) =
+            a =>
+              (f : a -> a) ~ (x : a) ~
+                f (f x)
+        | (foo : String -> String) =
+            double (_ # $+1$)
+        | (goo : Num -> Num) =
+            double (_ + 1)
+
+
+│ ‘Mycroft (Coupled)’ (§3.2.1)
+
+_ = (sq-list [ 2, 4 ], comp-list [ True, False ])
+    where (my-map : a => (a -> a) -> [ a ] -> [ a ]) =
+            a =>
+              (f : a -> a) ~ (l : [ a ]) ~
+                if empty? l
+                   then l
+                   else f (head l) :: my-map f (tail l)
+        | (sq-list : [ Num ] -> [ Num ]) =
+            my-map (_ ^ 2)
+        | (comp-list : [ Bool ] -> [ Bool ]) =
+            my-map not
+
+│ Here's a more Motmotastic pattern-matching version:
+
+_ = (sq-list [ 2, 4 ], comp-list [ True, False ])
+    where (my-map : a => (a -> a) -> [ a ] -> [ a ]) =
+            a =>
+              fun
+              ((_ : a -> a) | [{ a }]     ~ [{ a }])
+              ((f : a -> a) ~ (l : [ a ]) ~ f (head l) :: my-map f (tail l))
+        | (sq-list : [ Num ] -> [ Num ])     = my-map (_ ^ 2)
+        | (comp-list : [ Bool ] -> [ Bool ]) = my-map not
+
+
+│ ‘Sum List’ (§3.3)
+
+_ = sum-list [ 1 .. 3 ]
+    where (id : a => a -> a) =
+            a =>
+              (x : a) ~ x
+        | (sum-list : [ Num ] -> Num) =
+            (l : [ Num ]) ~
+              if empty? l
+                 then 0
+                 else id (head l) + sum-list (id (tail l))
+
+│ Here's a more Motmotastic clausal version:
+
+_ = sum-list [ 1 .. 3 ]
+    where (id : a => a -> a) =
+            a =>
+              (x : a) ~ x
+        | (sum-list : [ Num ] -> Num) =
+            fun
+            ([{ Num }]     ~ 0)
+            ((l : [ Num ]) ~ id (head l) + sum-list (id (tail l)))
+
+
+│ ‘Isomorphic Composition’ (§3.4)
+
+_ = app-comp 5 [ 5 ]
+    where (create-list : a => a -> [ a ]) =
+            a =>
+              (x : a) ~ [ x ]
+        | (remove-list : a => [ a ] -> a) =
+            a =>
+              (x : a) :: (_ : [ a ]) ~ x
+        | (comp : (a, b, c) => (b -> c) -> (a -> b) -> a -> c) =
+            (a, b, c) =>
+              (g : b -> c) ~ (f : a -> b) ~ f >> g
+        | (app-comp : a => a -> [ a ] -> Bool) =
+            a =>
+              (x : a) ~ (xs : [ a ]) ~
+                comp remove-list{ a } create-list{ a } x == head (comp create-list{ a } remove-list{ a } xs)
+
+
+│ ‘Matrix Transpose’ (§4.1.1)
+
+_ = map'' map' [ [ 1, 2 ], [ 3, 4 ] ]
+    where (map' : (a, b) => (a -> b) -> [ a ] -> [ b ]) = map
+        | (map'' : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ]) =
+            a =>
+              (f : (a, b) => (a -> b) -> [ a ] -> [ b ]) ~ (l : [ [ a ] ]) ~
+                cases
+                (empty? l        ~ [{ [ a ] }])
+                (empty? (head l) ~ [{ [ a ] }])
+                (_               ~ f head{ a } l :: map'' f (f tail{ a } l))
+
+│ Here's a more Motmotastic pattern-matching version:
+
+_ = map'' map' [ [ 1, 2 ], [ 3, 4 ] ]
+    where (map' : (a, b) => (a -> b) -> [ a ] -> [ b ]) = map
+        | (map'' : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ]) =
+            a =>
+              fun
+              ((_ : (a, b) => (a -> b) -> [ a ] -> [ b ]) | [{ a }] :: (_ : [ [ a ] ]) ~ [{ [ a ] }])
+              ((f : (a, b) => (a -> b) -> [ a ] -> [ b ]) ~ (l : [ [ a ] ])            ~ f head{ a } l :: map'' f (f tail{ a } l) )
+
+
+│ ‘Collect’ (§5.1)
+
+axiom T     : * -> *
+axiom Empty : a => T a
+axiom Node  : a => a -> (T (T a)) -> T a
+
+_ = collect (Node 3 (Node (Node 4 Empty{ T Num }) Empty{ T (T Num) }))
+    where (collect : a => T a -> [ a ]) =
+            a =>
+              fun
+              (Empty{ a }                  ~ [{ a }])
+              (Node (n : a) (t : T (T a)) ~ n :: concat-map collect{ a } (collect t))
+
+
+│ ‘BAR’ (§5.2)
+
+_ = bar 1 f a
+    where (r : Num -> Bool) = (_ >= 4)
+        | (f : Num -> Num)  = (_ * 2)
+        | (a : Num)         = 5
+        | (bar : a => Num -> (a -> a) -> a -> a) =
+            a =>
+              (x : Num) ~ (f' : a -> a) ~ (z : a) ~
+                if r x
+                   then f' z
+                   else bar{ a -> a } (f x) ((v : a -> a) ~ v >> v) f' z
+
+
+│ ‘Construct List’ (§6.1)
+
+_ = apply-cl [ 1 .. 3 ] [ True, False, True ] length
+    where (cons-list : a => a -> Num -> [ a ]) =
+            a =>
+              (x : a) ~ (n : Num) ~
+                if 0 == n
+                   then [ x, x ]
+                   else x :: tail (concat (cons-list (cons-list x (n - 1)) (n - 1)))
+        | (apply-cl : (a, b) => [ a ] -> [ b ] -> (c => [ c ] -> Num) -> ([ [ a ] ], [ [ b ] ])) =
+            (a, b) =>
+              (l1 : [ a ]) ~ (l2 : [ b ]) ~ (f : c => [ c ] -> Num) ~
+                (cons-list l1 (f l1), cons-list l2 (f l2))
+
+│ Here's a more Motmotastic clausal version:
+
+_ = apply-cl [ 1 .. 3 ] [ True, False, True ] length
+    where (cons-list : a => a -> Num -> [ a ]) =
+            a =>
+              (x : a) ~
+                fun
+                (0         ~ [ x, x ])
+                ((n : Num) ~ x :: tail (concat (cons-list (cons-list x (n - 1)) (n - 1))))
+        | (apply-cl : (a, b) => [ a ] -> [ b ] -> (c => [ c ] -> Num) -> ([ [ a ] ], [ [ b ] ])) =
+            (a, b) =>
+              (l1 : [ a ]) ~ (l2 : [ b ]) ~ (f : c => [ c ] -> Num) ~
+                (cons-list l1 (f l1), cons-list l2 (f l2))

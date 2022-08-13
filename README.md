@@ -47,25 +47,8 @@ anyone's use other than mine.
   bracketing to establish the nesting of control
   structures.)
 
-* [ParserCombinators.b.mot](ParserCombinators.b.mot):
-  ‘Motmot-B’-syntax (This is block-based, two-dimensional
-  syntax, like Tanager's.) version of the same code.
-
-  * ‘B’ syntax is deprecated; this will probably be removed
-    in the future.
-
-  * Here is a visualisation of the recursive space
-    partitioning used to parse Motmot B (and Tanager);
-    colours represent the various classes of syntactic
-    structure:
-    ![Motmot-B syntax.](MotmotBParserVisualisation.png)
-
-  * Here is a 3-D visualisation of the same parse, with
-    Z-values corresponding to recursion depth:
-    ![Motmot-B syntax.](MotmotBParserVisualisation3D.png)
-
-* [PolymorphicRecursion.b.mot](PolymorphicRecursion.b.mot):
-  ‘Motmot-B’-syntax examples of polymorphic recursion based
+* [PolymorphicRecursion.d.mot](PolymorphicRecursion.d.mot):
+  ‘Motmot-D’-syntax examples of polymorphic recursion based
   on Hallett and Kfoury's paper on the topic.
 
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot):
