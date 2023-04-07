@@ -56,7 +56,7 @@ custom-processing : () -> () = thunk (
     -- TML-encoded document structure.
     Processing.Text.parse-and-process process-line >>
     -- Render back to text and apply minor postprocessing.
-    Document.Rendering.markdown render-settings ->r render-stream >>
+    (Document.Rendering.markdown render-settings).render-stream >>
     Document.Structure.compress-blanks-string >>
     write-file-stream output-file
 )
