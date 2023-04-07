@@ -2,6 +2,8 @@
 
 #load $Processing.DSL$
 
+#using $Processing.DSL$
+
 input-file : String = $SampleDocument.txt.mot$
 
 processing : MarkdownRewritePack =
