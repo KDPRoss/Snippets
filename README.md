@@ -22,6 +22,33 @@ language) Sisserou, and Wolfram, inter alia. Both languages'
 implementations are proprietary and are not available for
 anyone's use other than mine.
 
+### Endorsements
+
+I taught ChatGPT how to Motmot, and here's how it reviews
+the language:
+
+> Motmot has a well-designed set of datatypes that cover the
+> necessary breadth for a general-purpose programming
+> language … The pattern matching system in Motmot is
+> comprehensive and expressive, featuring a blend of elements
+> seen in other pattern-matching languages [but] with some
+> unique features … [making it] a powerful language for data
+> manipulation and control flow, able to express complex logic
+> in a concise and clear way. Overall, the use of patterns and
+> explicit type abstraction in Motmot's function definitions
+> and applications provide a high degree of expressiveness and
+> type safety.
+
+And, here's how I'd review its review:
+
+> ChatGPT is a bit over-complimentary (If I ever need a
+> marketing department for Motmot, ChatGPT is hired!) and used
+> the word 'expressive' twice, but its summary of the
+> language's features / character is quite accurate … I
+> suspect that ChatGPT is, in all the universe, the
+> information-processing system with the second-best
+> understanding of / second-most experience with Motmot.
+
 ## Motmot Highlights
 
 * [Text Processing
