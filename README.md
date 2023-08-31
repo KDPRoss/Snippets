@@ -112,10 +112,10 @@ And, here's how I'd review its review:
 If you have a wide monitor (or are unafraid of tiny text),
 have a look at [The Rosetta Stone](RosettaStone.txt) …
 Rather than a tedious proclamation about tax exemptions for
-priests, it's matched Tanager, Motmot-B, and Motmot-D code
+priests, it's matched Tanager, Motmot-D, and Motmot-F code
 implementing a classic parser-combinator library, along with
 commentary.
 
-This is generated (from the Tanager-5, Motmot-B, and
-Motmot-D code files) by some custom Motmot code, using the
+This is generated (from the Tanager-5, Motmot-D, and
+Motmot-F code files) by some custom Motmot code, using the
 ‘Data.Table.Boxy’ cell-compositor library.
