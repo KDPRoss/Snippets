@@ -43,7 +43,7 @@ And, here's how I'd review its review:
 
 > ChatGPT is a bit over-complimentary (If I ever need a
 > marketing department for Motmot, ChatGPT is hired!) and used
-> the word 'expressive' twice, but its summary of the
+> the word ‘expressive’ twice, but its summary of the
 > language's features / character is quite accurate … I
 > suspect that ChatGPT is, in all the universe, the
 > information-processing system with the second-best
@@ -51,61 +51,50 @@ And, here's how I'd review its review:
 
 ## Motmot Highlights
 
-* [Text Processing
-  Demonstration](text-processing/README.md): Demonstration
-  of Motmot's text-processing library.
-
-* [Testing in Motmot](TestingInMotmot.ipynb): Illustration
-  of two styles of test cases in Motmot: Hand-written cases
-  and [QuickCheck](https://en.wikipedia.org/wiki/QuickCheck)
+* [Text Processing Demonstration](text-processing/README.md):
+  Demonstration of Motmot's text-processing library.
+* [Testing in Motmot](TestingInMotmot.ipynb): Illustration of
+  two styles of test cases in Motmot: Hand-written cases and
+  [QuickCheck](https://en.wikipedia.org/wiki/QuickCheck)
   properties.
-
 * [ParserCombinators.mot](ParserCombinators.mot):
   ‘Motmot-A’-syntax (This is a simple, one-dimensional
   syntax, like that found in most programming languages.) of
-  Graham Hutton's seminal parser-combinator paper, along
-  with some comments comparing the Miranda implementation
-  from that paper.
-
+  Graham Hutton's seminal parser-combinator paper, along with
+  some comments comparing the Miranda implementation from that
+  paper.
 * [ParserCombinators.d.mot](ParserCombinators.d.mot):
   ‘Motmot-D’-syntax (This is a CamlTrax-inspired
   indentation-sensitive variation of the ‘Motmot-A’ syntax
-  which allows omitting numerous ‘administrative’ tokens and
-  bracketing to establish the nesting of control
+  which allows omitting numerous ‘administrative’ tokens
+  and bracketing to establish the nesting of control
   structures.)
-
 * [PolymorphicRecursion.d.mot](PolymorphicRecursion.d.mot):
-  ‘Motmot-D’-syntax examples of polymorphic recursion based
-  on Hallett and Kfoury's paper on the topic.
-
-* [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot):
-  Generate primes; based on some more code by Hutton,
-  demonstrating ‘Why Functional Programming Matters’-style
-  manipulation of (potentially-)infinite data structures.
+  ‘Motmot-D’-syntax examples of polymorphic recursion
+  based on Hallett and Kfoury's paper on the topic.
+* [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot): Generate
+  primes; based on some more code by Hutton, demonstrating
+  ‘Why Functional Programming Matters’-style manipulation
+  of (potentially-)infinite data structures.
 
 ## Tanager Highlights
 
 * [Factorial.t5](Factorial.t5): Numerous factorial
   implementations, demonstrating the language's syntactic
-  versatility, ranging from a mutable-reference-based
-  version, to a point-free one, to Peano arithmetic, along
-  with some tests.
-
+  versatility, ranging from a mutable-reference-based version,
+  to a point-free one, to Peano arithmetic, along with some
+  tests.
 * [FizzBuzz.t5](FizzBuzz.t5): A few implementations of the
   fizz–buzz problem, demonstrating: Predicate patterns,
-  `cases` discrimination, absurd patterns, list ranges,
-  tuple catamorphisms, expression infixation, and generative
-  tuple projection.
-
-* [Mandelbrot.t5](Mandelbrot.t5): Simple text renderer of
-  the Mandelbrot Set, demonstrating: Records and recursive
-  λs.
-
-
-* [Sudoku.t5](Sudoku.t5): A nondeterminism-monad-based
-  (i.e., backtracking) Sudoku solver, demonstrating:
-  Algebraic data types, list comprehensions, pipeline
-  composition, and mixfix syntax.
+  `cases` discrimination, absurd patterns, list ranges, tuple
+  catamorphisms, expression infixation, and generative tuple
+  projection.
+* [Mandelbrot.t5](Mandelbrot.t5): Simple text renderer of the
+  Mandelbrot Set, demonstrating: Records and recursive λs.
+* [Sudoku.t5](Sudoku.t5): A nondeterminism-monad-based (i.e.,
+  backtracking) Sudoku solver, demonstrating: Algebraic data
+  types, list comprehensions, pipeline composition, and mixfix
+  syntax.
 
 ## The Rosetta Stone
 
