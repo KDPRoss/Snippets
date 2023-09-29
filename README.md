@@ -20,7 +20,9 @@ Both are functional languages drawing inspiration,
 variously, from Haskell, Miranda, Hope, F#, Scala, (my
 language) Sisserou, and Wolfram, inter alia. Both languages'
 implementations are proprietary and are not available for
-anyone's use other than mine.
+anyone's use other than mine. (Well, this is no longer quite
+true: MotmotLite is available [in this
+repository](https://github.com/KDPRoss/MotmotLite).)
 
 ### Endorsements
 
