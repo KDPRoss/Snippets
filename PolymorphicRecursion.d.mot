@@ -176,7 +176,7 @@ _ = apply-cl [ 1 .. 3 ] [ True, False, True ] length
 _ = apply-cl [ 1 .. 3 ] [ True, False, True ] length
     where (cons-list : a => a -> Num -> [ a ]) =
             a =>
-              (x : a) ~
+              x : a ~
                 fun
                 (0       ~ [ x, x ])
                 (n : Num ~ x :: tail (concat (cons-list (cons-list x (n - 1)) (n - 1))))

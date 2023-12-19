@@ -65,14 +65,11 @@ And, here's how I'd review its review:
   Graham Hutton's seminal parser-combinator paper, along with
   some comments comparing the Miranda implementation from that
   paper.
-* [ParserCombinators.d.mot](ParserCombinators.d.mot):
-  ‘Motmot-D’-syntax (This is a CamlTrax-inspired
-  indentation-sensitive variation of the ‘Motmot-A’ syntax
-  which allows omitting numerous ‘administrative’ tokens
-  and bracketing to establish the nesting of control
-  structures.)
 * [PolymorphicRecursion.d.mot](PolymorphicRecursion.d.mot):
   ‘Motmot-D’-syntax examples of polymorphic recursion
+  based on Hallett and Kfoury's paper on the topic.
+* [PolymorphicRecursion.f.mot](PolymorphicRecursion.f.mot):
+  ‘Motmot-F’-syntax examples of polymorphic recursion
   based on Hallett and Kfoury's paper on the topic.
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot): Generate
   primes; based on some more code by Hutton, demonstrating

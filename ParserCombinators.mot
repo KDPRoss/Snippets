@@ -222,8 +222,7 @@ wrap-parser : a => Parse a -> Letters -> [ a ] =
       filter (
         snd{ a, Letters } >>
         ([{ Letter }] == _)
-      ) >>
-      map fst{ a, Letters }
+      ) >> map fst{ a, Letters }
 
 wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
   a =>
