@@ -88,7 +88,7 @@ isomorphic-composition : Bool =
   where create-list : a => a -> [ a ]                      = a =>
                                                                x : a ~ [ x ]
       | remove-list : a => [ a ] -> a                      = a =>
-                                                               (x : a) :: (_ : [ a ]) ~ x
+                                                               x : a :: _ : [ a ] ~ x
       | comp : (a, b, c) => (b -> c) -> (a -> b) -> a -> c = (a, b, c) =>
                                                                g : b -> c ~ f : a -> b ~ f >> g
       | app-comp : a => a -> [ a ] -> Bool                 = a =>
@@ -114,8 +114,8 @@ matrix-transpose' : [ [ Num ] ] =
   where map' : (a, b) => (a -> b) -> [ a ] -> [ b ]                                   = map
       | map'' : a => ((a, b) => (a -> b) -> [ a ] -> [ b ]) -> [ [ a ] ] -> [ [ a ] ] = a =>
                                                                                           fun
-                                                                                          (_ : (a, b) => (a -> b) -> [ a ] -> [ b ] | [{ a }] :: (_ : [ [ a ] ]) ~ [{ [ a ] }])
-                                                                                          (f : (a, b) => (a -> b) -> [ a ] -> [ b ] ~ l : [ [ a ] ]              ~ f head{ a } l :: map'' f (f tail{ a } l) )
+                                                                                          (_ : (a, b) => (a -> b) -> [ a ] -> [ b ] | [{ a }] :: _ : [ [ a ] ] ~ [{ [ a ] }])
+                                                                                          (f : (a, b) => (a -> b) -> [ a ] -> [ b ] ~ l : [ [ a ] ]            ~ f head{ a } l :: map'' f (f tail{ a } l) )
 
 │ (§5.1)
 
