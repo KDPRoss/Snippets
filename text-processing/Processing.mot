@@ -16,7 +16,7 @@ basic-processing : () -> () = thunk (
   processing
   ->markdown-file-now {
     input-file,
-    output-file ~ rr $[.].*$ $.basic.md$ input-file,
+    output-file ~ $[.].*$ =>r $.basic.md$ input-file,
   }
 )
 
@@ -25,7 +25,7 @@ cached-processing : () -> () = thunk (
   +cache-file $Markdown.process-line.mot.cache$
   ->markdown-file-now {
     input-file,
-    output-file ~ rr $[.].*$ $.cached.md$ input-file,
+    output-file ~ $[.].*$ =>r $.cached.md$ input-file,
   }
 )
 
@@ -50,7 +50,7 @@ custom-processing : () -> () = thunk (
     -- containing the string `nunc`.
     filter-stream (
       lowercase >>
-      mr $nunc$ >>
+      (_ ~=s $nunc$) >>
       not
     ) >> Processing.Text.paragraphs >>
     map-stream capitalise >>
@@ -79,4 +79,4 @@ where process-line : String -> String         = -- Use the common processing but
                                                 -- capitalised.
                                                 s : String ~
                                                   $#{s |> take-string 1 >> uppercase}#{drop-string 1 s}$
-    | output-file : String                    = rr $[.].*$ $.custom.md$ input-file
+    | output-file : String                    = $[.].*$ =>r $.custom.md$ input-file

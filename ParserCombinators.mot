@@ -108,12 +108,13 @@ some : a => Parse a -> Parse [ a ] =
 
 number : Parse String =
   some (satisfy digit) >>> implode
-  where (digit : String -> Bool) = ($0$ =< _) and^ (_ =< $9$)
+  where (digit : String -> Bool) = c : String ~
+                                     $0$ =< c =< $9$
 
 word : Parse String =
   some (satisfy letter) >>> implode
-  where (letter : String -> Bool) = lowercase >>
-                                    ($a$ =< _) and^ (_ =< $z$)
+  where (letter : String -> Bool) = c : String ~
+                                      $a$ =< lowercase c =< $z$
 
 string : String -> Parse String =
   explode >> (
