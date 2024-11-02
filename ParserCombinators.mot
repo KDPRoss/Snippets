@@ -108,13 +108,13 @@ some : a => Parse a -> Parse [ a ] =
 
 number : Parse String =
   some (satisfy digit) >>> implode
-  where (digit : String -> Bool) = c : String ~
-                                     $0$ =< c =< $9$
+where (digit : String -> Bool) = c : String ~
+                                   $0$ =< c =< $9$
 
 word : Parse String =
   some (satisfy letter) >>> implode
-  where (letter : String -> Bool) = c : String ~
-                                      $a$ =< lowercase c =< $z$
+where (letter : String -> Bool) = c : String ~
+                                    $a$ =< lowercase c =< $z$
 
 string : String -> Parse String =
   explode >> (
@@ -144,6 +144,7 @@ return : (a, b) => Parse a -> b -> Parse b =
   (a, b) =>
     p : Parse a ~ v : b ~
       p >>> const{ a } v
+
 
 
 -- ========== Example Expression Language (§2.4) ========== --
@@ -194,7 +195,7 @@ divide : (Expr, Expr) -> Expr = uncurry Div
 │ Don't handle error cases (e.g., `_ / 0`).
 
 eval-expr : Expr -> Num =
-  case of
+  fun
   (Num (n : Num)              ~ n)
   (Add (e : Expr) (e' : Expr) ~ eval-expr e + eval-expr e')
   (Sub (e : Expr) (e' : Expr) ~ eval-expr e - eval-expr e')
