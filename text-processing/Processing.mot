@@ -1,7 +1,10 @@
 #MotmotF
 
 #load [
+  $Document.Rendering$,
+  $Document.Structure$,
   $Processing.DSL$,
+  $Processing.Text$,
 ]
 
 #using $Processing.DSL$
@@ -29,17 +32,6 @@ cached-processing : () -> () = thunk (
   }
 )
 
--- (These libraries are already loaded by the DSL, but it's
--- good practice to do so explicitly here since we're
--- directly referring to their bindings (and so that we
--- don't rely on internal implementation details of the
--- DSL).)
-#load [
-  $Document.Rendering$,
-  $Document.Structure$,
-  $Processing.Text$,
-]
-
 custom-processing : () -> () = thunk (
   input-file |>
     read-file-progress-stream >>
@@ -62,21 +54,23 @@ custom-processing : () -> () = thunk (
     Document.Structure.compress-blanks-string >>
     write-file-stream output-file
 )
-where process-line : String -> String         = -- Use the common processing but remove the title.
-                                                processing
-                                                +trees [
-                                                  {[[Centre]] ---} ~ Fake!
-                                                ]
-                                                -- Can't share the cache with `cached-processing`, since
-                                                -- they're doing different things.
-                                                +cache-file $Markdown.process-line-custom.mot.cache$
-                                                ->string ()
+where output-file                             = $[.].*$ =>r $.custom.md$ input-file
     | render-settings : RenderMarkdownOptions = -- Take rendering defaults but increase wrapping column.
                                                 { Document.Rendering.Settings.Markdown.defaults...,
                                                   wrap-width ~ 80,
                                                 }
-    | capitalise : String -> String           = -- Ensure that the first word of each paragraph is
-                                                -- capitalised.
-                                                s : String ~
-                                                  $#{s |> take-string 1 >> uppercase}#{drop-string 1 s}$
-    | output-file : String                    = $[.].*$ =>r $.custom.md$ input-file
+    | process-line : String -> String =
+        -- Use the common processing but remove the title.
+        processing
+        +trees [
+          {[[Centre]] ---} ~ Fake!
+        ]
+        -- Can't share the cache with `cached-processing`, since
+        -- they're doing different things.
+        +cache-file $Markdown.process-line-custom.mot.cache$
+        ->string ()
+    | capitalise : String -> String =
+        -- Ensure that the first word of each paragraph is
+        -- capitalised.
+        s : String ~
+          $#{s |> take-string 1 >> uppercase}#{drop-string 1 s}$

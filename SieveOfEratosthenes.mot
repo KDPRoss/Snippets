@@ -54,5 +54,6 @@ twin-primes : Stream (Num, Num) =
     drop-stream 1 >>
     zip-stream primes >>
     filter-stream twin
-where twin : (Num, Num) -> Bool = (x : Num, y : Num) ~
-                                    y == x + 2
+where twin : (Num, Num) -> Bool =
+        (x : Num, y : Num) ~
+          y == x + 2

@@ -79,7 +79,9 @@ mixfix 110 _ <=> _
       concat-map ((v1 : a, out1 : Letters) ~
         out1 |>
           p2 >>
-          map ((v2 : b, out2 : Letters) ~ ((v1, v2), out2))
+          map ((v2 : b, out2 : Letters) ~
+            ((v1, v2), out2)
+          )
       )
 
 
@@ -108,13 +110,15 @@ some : a => Parse a -> Parse [ a ] =
 
 number : Parse String =
   some (satisfy digit) >>> implode
-where (digit : String -> Bool) = c : String ~
-                                   $0$ =< c =< $9$
+where (digit : String -> Bool) =
+        c : String ~
+          $0$ =< c =< $9$
 
 word : Parse String =
   some (satisfy letter) >>> implode
-where (letter : String -> Bool) = c : String ~
-                                    $a$ =< lowercase c =< $z$
+where (letter : String -> Bool) =
+        c : String ~
+          $a$ =< lowercase c =< $z$
 
 string : String -> Parse String =
   explode >> (
@@ -207,12 +211,12 @@ eval-expr : Expr -> Num =
 
 read-eval-print : String -> () =
   s : String ~
-    let strict ()               = print $input:  `#{s}`.$
+    let strict _                = print $input:  `#{s}`.$
              | (e : Maybe Expr) = s |>
                                     explode >>
                                     wrap-parser-unique expn in
     case e of
-    (Just (e : Expr) ~ let strict () = print $parsed: `#{e}`.$ in
+    (Just (e : Expr) ~ let strict _ = print $parsed: `#{e}`.$ in
                        print $eval:   `#{eval-expr e}`.$
     )
     (Nothing{ Expr } ~ print $PARSE FAILURE!$)
@@ -230,8 +234,8 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
   a =>
     p : Parse a ~ inp : Letters ~
       case wrap-parser p inp of
-      ((v : a) :: [{ a }] ~ Just v)
-      (_ : [ a ]          ~ Nothing{ a })
+      ([ v : a ] ~ Just v)
+      (_ : [ a ] ~ Nothing{ a })
 
 
 -- ===== Examples ==== --
