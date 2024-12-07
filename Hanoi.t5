@@ -5,7 +5,7 @@ PRAGMA Library "Demo.TowersOfHanoi"
 
 -- Towers of Hanoi in Tanager.                        --
 --                                                    --
--- Copyright 2015-2018 K.D.P.Ross <KDPRoss@gmail.com> --
+-- Copyright 2015-2024 K.D.P.Ross <KDPRoss@gmail.com> --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --

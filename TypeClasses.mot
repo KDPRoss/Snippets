@@ -1,0 +1,202 @@
+#MotmotF
+
+┌───────────────────────────────────────────────────┐
+│ Type classes in Motmot                            │
+│                                                   │
+│ Copyright 2024 K.D.P.Ross <KDPRoss@gmail.com>     │
+│                                                   │
+│ This code is licensed only for study and personal │
+│ enrichment.                                       │
+└───────────────────────────────────────────────────┘
+
+
+│ Unlike in Haskell, type classes are not a first-class
+│ language feature in Motmot. And, unlike in Scala, they
+│ can't be hacked together with implicit arguments. But,
+│ unlike in OCaml, we have higher-kinded types and needn't
+│ resort to cumbersome encoding via modules.
+
+
+┌──────────────────────────────────────────┐
+│ ‘The raison  d'être  of a program  is to │
+│ be  a  mathematically-elegant  object of │
+│ sublime beauty; it's also pretty cool if │
+│ it  occasionally   computes  something.’ │
+│                             - K.D.P.Ross │
+└──────────────────────────────────────────┘
+
+
+{-- Demo.TypeClass --}
+
+-- ===== Type Classes ===== --
+
+│ The classes, themselves, are encoded as typedefs to
+│ polymorphic records like this (i.e., they are the
+│ dictionaries that witness the types' membership in the
+│ class):
+
+typedef Eq = a => {
+  == : a -> a -> Bool,
+}
+
+-- We can effectively encode the `Eq a => Ord a` constraint
+-- by requiring a witness of `Eq a` be *included* in the one
+-- for `Ord a`.
+typedef Ord = a => {
+  eq : Eq a,
+  =< : a -> a -> Bool,
+}
+
+typedef Functor = (f : * -> *) => {
+  fmap : (a, b) => (a -> b) -> f a -> f b,
+}
+
+-- This will suffice for our demo.
+typedef Foldable = (t : * -> *) => {
+  foldl : (a, b) => (a -> b -> a) -> a -> t b -> a,
+}
+
+typedef Monad = (m : * -> *) => {
+  return : a => a -> m a,
+  >>= : (a, b) => m a -> (a -> m b) -> m b,
+}
+
+-- ===== Instances ===== --
+
+│ Instances, then, are values of the appropriately-instanted
+│ records:
+
+eq-num : Eq Num = {
+  == ~ =={ Num },
+}
+
+ord-num : Ord Num = {
+  eq ~ eq-num,
+  =< ~ =<{ Num },
+}
+
+-- As a minor consolation for having to pass the evidence /
+-- dictionaries manually, we can have multiple instances for
+-- a single type.
+ord-num-rev : Ord Num = {
+  eq ~ eq-num,
+  =< ~ >={ Num },
+}
+
+functor-list : Functor List = {
+  fmap ~ map,
+}
+
+functor-maybe : Functor Maybe = {
+  fmap ~ map-maybe,
+}
+
+functor-stream : Functor Stream = {
+  fmap ~ map-stream,
+}
+
+foldable-list : Foldable List = {r
+  foldl,
+}
+
+foldable-stream : Foldable Stream = {
+  foldl ~ fold-stream,
+}
+
+foldable-maybe : Foldable Maybe = {
+  foldl ~ (a, b) =>
+            f : a -> b -> a ~ acc : a ~
+              fun
+              (Nothing{ b } ~ acc)
+              (Just (x : b) ~ f acc x),
+}
+
+axiom Identity : * -> *
+axiom Identity : a => a -> Identity a
+
+monad-identity : Monad Identity = {
+  return ~ Identity,
+  >>=    ~ (a, b) =>
+             Identity (x : a) ~ f : a -> Identity b ~
+               f x,
+}
+
+monad-list : Monad List = {
+  return ~ list,
+  >>=    ~ (a, b) => flip concat-map{ a, b },
+}
+
+monad-stream : Monad Stream = {
+  return ~ a => x : a ~ { x },
+  >>=    ~ (a, b) => flip concat-map-stream{ a, b },
+}
+
+monad-maybe : Monad Maybe = {
+  return ~ Just,
+  >>=    ~ (a, b) =>
+             m : Maybe a ~ f : a -> Maybe b ~
+               case m
+               (Just (x : a) ~ f x)
+               (Nothing{ a } ~ Nothing{ b }),
+}
+
+
+
+-- ===== Examples ===== --
+
+│ The approximate equivalent of a qualified type is
+│ a function that abstracts over the relevant dictionary
+│ types:
+
+sort-ord : a => Ord a -> [ a ] -> [ a ] =
+  a =>
+    ord : Ord a ~
+      sort-by ord.=<
+
+│ [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+│ [ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ]
+use-sort-ord : () -> () = thunk (
+  seq nums = [ 2, 10, 5, 1, 7, 6, 8, 3, 4, 9 ]
+    | _    = print (sort-ord ord-num nums)
+    | _    = print (sort-ord ord-num-rev nums)
+)
+
+-- Here's a container-polymorphic toy function.
+sum-squares : (f : * -> *) => Functor f -> Foldable f -> f Num -> Num =
+  (f : * -> *) =>
+    func : Functor f ~ fold : Foldable f ~ xs : f Num ~
+      xs |>
+        func.fmap (_ ^ 2) >>
+        fold.foldl (+) 0
+
+│ 55
+│ 55
+│ 25
+│ 0
+use-sum-squares : () -> () = thunk (
+  seq _ = print (sum-squares functor-list foldable-list [ 1 .. 5 ])
+    | _ = print (sum-squares functor-stream foldable-stream { 1 .. 5 })
+    | _ = print (sum-squares functor-maybe foldable-maybe (Just 5))
+    | _ = print (sum-squares functor-maybe foldable-maybe Nothing{ Num })
+)
+
+-- Here's a monad-polymorphic toy function.
+funny : (m : * -> *) => Monad m -> m Num =
+  (m : * -> *) => m : Monad m ~ (
+    m.return 5 >>= n : Num ~
+    m.return (n ^ n)
+  )
+  where >>= = m.>>=
+
+│ [ 3125 ]
+│ <lazy-stream>
+│ Just 3125
+│ Identity 3125
+use-funny : () -> () = thunk (
+  seq _ = print (funny monad-list)
+    | _ = print (funny monad-stream)
+    | _ = print (funny monad-maybe)
+    | _ = print (funny monad-identity)
+)
+
+{-end- Demo.TypeClass --}

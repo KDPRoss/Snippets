@@ -5,7 +5,7 @@ PRAGMA Library "Demo.Sudoku"
 
 -- Sudoku Solver in Tanager.                          --
 --                                                    --
--- Copyright K.D.P.Ross <KDPRoss@gmail.com>           --
+-- Copyright 2018-2024 K.D.P.Ross <KDPRoss@gmail.com> --
 --                                                    --
 -- This code is licensed only for study and personal  --
 -- enrichment.                                        --

@@ -1,5 +1,12 @@
 #MotmotF
 
+┌────────────────────────────────────────────────────┐
+│ Copyright 2020-2024 K.D.P.Ross <KDPRoss@gmail.com> │
+│                                                    │
+│ This code is licensed only for study and personal  │
+│ enrichment.                                        │
+└────────────────────────────────────────────────────┘
+
 #load [
   $Document.Rendering$,
   $Document.Structure$,

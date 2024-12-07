@@ -65,12 +65,11 @@ And, here's how I'd review its review:
   Graham Hutton's seminal parser-combinator paper, along with
   some comments comparing the Miranda implementation from that
   paper.
-* [PolymorphicRecursion.d.mot](PolymorphicRecursion.d.mot):
-  ‘Motmot-D’-syntax examples of polymorphic recursion
-  based on Hallett and Kfoury's paper on the topic.
+* [TypeClasses.mot](TypeClasses.mot): Encoding of type
+  classes in Motmot with some simple examples.
 * [PolymorphicRecursion.f.mot](PolymorphicRecursion.f.mot):
-  ‘Motmot-F’-syntax examples of polymorphic recursion
-  based on Hallett and Kfoury's paper on the topic.
+  Examples of polymorphic recursion based on Hallett and
+  Kfoury's paper on the topic.
 * [SieveOfEratosthenes.mot](SieveOfEratosthenes.mot): Generate
   primes; based on some more code by Hutton, demonstrating
   ‘Why Functional Programming Matters’-style manipulation
