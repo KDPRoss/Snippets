@@ -1,0 +1,298 @@
+#MotmotF
+
+┌─────────────────────────────────────────────────────┐
+│ An exploration of time-limited computation ... with │
+│ monads, naturally!                                  │
+│                                                     │
+│ Copyright 2024 K.D.P.Ross <KDPRoss@gmail.com>       │
+│                                                     │
+│ This code is licensed only for study and personal   │
+│ enrichment.                                         │
+└─────────────────────────────────────────────────────┘
+
+#load [
+  $Monads$,
+  $Testing$,
+]
+
+
+
+-- ===== Straightforward Pure Implementation ===== --
+
+-- Na:ive `fib` implementation: We want something that takes
+-- a noticeable amount of time to run. Nobody should
+-- *actually* implement this this way.
+fib : Num -> Num =
+  fun
+  (0 or 1  ~ 1)
+  (n : Num ~ let m1 : Num = fib (n - 2)
+               | m2 : Num = fib (n - 1)
+             m1 + m2
+  )
+
+test-naive : () -> () = thunk (
+  Testing.run-test-eq $fib-naïve$ fib [
+    0  |-> 1,
+    1  |-> 1,
+    5  |-> 8,
+    10 |-> 89,
+  ]
+)
+
+
+
+-- ===== Motivating Example ===== --
+
+-- If we're sufficiently patient, we can generate Fibonacci
+-- numbers ad infinitum.
+fibs-forever : () -> () = thunk (
+  { 1 .. } |>
+    map-stream fib >>
+    ip-stream
+)
+
+-- Pragmatically, however, we probably want to limit
+-- ourselves to a finite amount of work. One way that we can
+-- do this is by specifying the number of *values* that we'd
+-- like to compute.
+fibs-finite : () -> () = thunk (
+  { 1 .. } |>
+    map-stream fib >>
+    take-stream 20 >>
+    ip-stream
+)
+
+-- But, what if we want to limit the amount of *time* that
+-- we spend computing values? Let's build up to an
+-- implementation where we can do that. First, let's write
+-- a monadic implementation.
+
+
+
+-- ===== Identity Monad ===== --
+
+-- The most-uninteresting monad encoding the 'identity
+-- effect'. (We very well could have used
+-- `Monads.Instance.identity`.)
+
+axiom Identity : * -> *
+axiom Identity : a => a -> Identity a
+
+identity-instance : MonadInstance Identity =
+  {r return, >>= }
+where return : a => a -> Identity a =
+        Identity
+    | >>= : (a, b) => Identity a -> (a -> Identity b) -> Identity b =
+        (a, b) =>
+          Identity (x : a) ~ f : a -> Identity b ~
+            f x
+
+run-identity : a => Identity a -> a =
+  a =>
+    Identity (x : a) ~
+      x
+
+
+
+-- ===== Identity-Monad Implementation ===== --
+
+-- Gratuitously-monadic `fib` -- transitioning style but not
+-- functionality.
+fib-identity : Num -> Identity Num =
+    fun
+    (0 or 1  ~ return 1)
+    (n : Num ~ do m1 : Num = fib-identity (n - 2)
+                | m2 : Num = fib-identity (n - 1)
+                | return (m1 + m2)
+    )
+  where return = identity-instance.return
+      | >>=    = identity-instance.>>=
+
+-- Henceforth, we can test by appealing to equivalence with
+-- our reference implementation.
+test-identity : () -> () = thunk (
+  Testing.run-test-eq $fib-monadic-identity$ fib' [
+    x |-> fib x | x : Num <- [ 0 .. 10 ]
+  ]
+  where fib' : Num -> Num =
+          fib-identity >>
+          run-identity
+)
+
+
+
+-- ===== Monad-Polymorphic Implementation ===== --
+
+-- Now, let's abstract further -- we don't care what sort of
+-- effect the monad is encoding. Unlike in Haskell, we'll
+-- need to pass the dictionary of evidence explicitly.
+fib-poly : (m : * -> *) => MonadInstance m -> Num -> m Num =
+  (m : * -> *) =>
+    m : MonadInstance m ~
+      fun
+      (0 or 1  ~ return 1)
+      (n : Num ~ do ()       = -- Hrmmm, why would we do *this* ;~P
+                               -- (Exercise for the reader; a bit subtle.)
+                               return ()
+                  | m1 : Num = fib-poly m (n - 2)
+                  | m2 : Num = fib-poly m (n - 1)
+                  | return (m1 + m2)
+      )
+    where return = m.return
+        | >>=    = m.>>=
+
+-- This will be equivalent to `fib-identity` when we
+-- instantiate it with `Identity` and the associated
+-- evidence that `Identity` is a `MonadInstance`.
+test-poly-identity : () -> () = thunk (
+  Testing.run-test-eq $fib-monadic-poly/identity$ fib' [
+    x |-> fib x | x : Num <- [ 0 .. 10 ]
+  ]
+  where fib' : Num -> Num =
+          fib-poly identity-instance >>
+          run-identity
+)
+
+
+
+-- ===== Real-Time-Limited Monad ===== --
+
+-- Takes a max epoch time before failing; returns
+-- `Nothing{ a }` if this has been exhausted, and `Just
+-- <some-value>` else.
+axiom Time : * -> *
+axiom Time : a => (Num -> Maybe a) -> Time a
+
+time-instance : MonadInstance Time =
+  {r return, >>= }
+where return : a => a -> Time a =
+        -- Always succeed. Note: That any pure operations are
+        -- expected to be 'trivially fast'.
+        a =>
+          x : a ~
+            Time (_ : Num ~
+              Just x
+            )
+    | >>= : (a, b) => Time a -> (a -> Time b) -> Time b =
+        (a, b) =>
+          Time (f : Num -> Maybe a) ~ g : a -> Time b ~
+            Time (max-time : Num ~
+              let strict t = now ()
+              if t >= max-time
+                 then -- We've exhausted our time budget; fail now.
+                      Nothing{ b }
+                 else case -- Evaluate the 'LHS' of the bind.
+                           f max-time
+                      (Nothing{ a } ~ -- If we've exhausted our time, stop.
+                                      Nothing{ b }
+                      )
+                      (Just (x : a) ~ -- Carry on, with the RHS feeding through the time limit.
+                                      let Time (g' : Num -> Maybe b) = g x
+                                      g' max-time
+                      )
+            )
+
+-- Current time in seconds since epoch, including
+-- decimalised partial seconds. Motmot doesn't have a native
+-- way to do this, so we'll defer to GNU's `date` for this.
+now : () -> Num = thunk (
+  $date +%s.%N$ |>
+    eval-result >>
+    head >>
+    read{ Num }
+)
+
+-- Here, we'll accept a maximum *number of seconds* to run;
+-- this is significantly more usable.
+run-time : a => Time a -> Num -> Maybe a =
+  a =>
+    Time (f : Num -> Maybe a) ~ max-time : Num ~
+      f (now () + max-time)
+
+-- Can't test this without making some assumptions; these
+-- will fail on a machine that's either 'too fast' or 'too
+-- slow'.
+test-poly-time : () -> () = thunk (
+  Testing.run-test-eq $fib-monadic-poly/time$ fib' [
+    [ x |-> Just (fib x) | x : Num <- [ 0 .. 10 ] ]...,
+    1000 |-> Nothing{ Num },
+    1m |-> Nothing{ Num },
+  ]
+  where time-limit = 1
+      | fib' : Num -> Maybe Num =
+          x : Num ~
+            run-time (fib-poly{ Time } time-instance x) time-limit
+)
+
+-- We can't just use `Monads.Utilities.map-m`: We would get
+-- `Nothing` given a potentially-infinite stream or if any
+-- computation took 'too long'. Here, we want to keep
+-- mapping until our time budget is exhausted, producing as
+-- many results as we have time to.
+map-stream-time-lim : (a, b) => (a -> Time b) -> Stream a -> Time (Stream b) =
+  (a, b) =>
+    f : a -> Time b ~
+      loop {{ b }}
+  where loop : Stream b -> Stream a -> Time (Stream b) =
+          results : Stream b ~ xs : Stream a ~
+            Time (max-time : Num ~
+              case xs
+              ({{ a }}                 ~ -- No more work to do!
+                                         Just results
+              )
+              (x : a ::: xs : Stream a ~ let Time (f' : Num -> Maybe b) = f x
+                                         case f' max-time
+                                         (Nothing{ b } ~ -- Ran out of time trying to run `f x`; give up but retain
+                                                         -- what we've accomplished thus far.
+                                                         Just results
+                                         )
+                                         (Just (y : b) ~ -- Update results ... and carry on!
+                                                         let results'                                  = results ++_ ({ y })
+                                                           | Time (loop' : Num -> Maybe (Stream b)) = loop results' xs
+                                                         loop' max-time
+                                         )
+              )
+            )
+
+-- And, at last, we arrive at this: Compute some Fibonacci
+-- numbers ... How many? Well, as many as can be computed in
+-- at most 5 seconds (+/- a small factor).
+fibs-for-5-seconds : () -> () = thunk (
+  seq (results : Maybe (Stream Num), sec : Num) = time (thunk (run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5))
+    | _                                         = results ?? {{ Num }} |> ip-stream
+    | _                                         = print $in #{sd sec}sec$
+)
+
+
+
+-- ===== Main ===== --
+
+-- Let's run our tests and generate 5 seconds of Fibonacci
+-- numbers!
+
+-- Example output:
+-- [fib-naïve]: Ran 4 cases successfully.
+-- [fib-monadic-identity]: Ran 11 cases successfully.
+-- [fib-monadic-poly/identity]: Ran 11 cases successfully.
+-- [fib-monadic-poly/time]: Ran 13 cases successfully.
+-- 1
+-- 2
+-- 3
+-- 5
+-- 8
+-- 13
+-- 21
+-- 34
+-- 55
+-- 89
+-- 144
+-- 233
+-- 377
+-- in 5.00159311295sec
+run : () -> () = thunk (
+  seq _ = test-naive ()
+    | _ = test-identity ()
+    | _ = test-poly-identity ()
+    | _ = test-poly-time ()
+    | _ = fibs-for-5-seconds ()
+)

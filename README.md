@@ -59,6 +59,8 @@ And, here's how I'd review its review:
   two styles of test cases in Motmot: Hand-written cases and
   [QuickCheck](https://en.wikipedia.org/wiki/QuickCheck)
   properties.
+* [TimeLimited.mot](TimeLimited.mot): An exploration of
+  monadic time-limited computation.
 * [ParserCombinators.mot](ParserCombinators.mot):
   ‘Motmot-A’-syntax (This is a simple, one-dimensional
   syntax, like that found in most programming languages.) of
