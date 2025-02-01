@@ -53,6 +53,10 @@ And, here's how I'd review its review:
 
 ## Motmot Highlights
 
+![Melanie the Motmot motmot.](./images/melanie.jpg)
+
+Motmot is proudly represented by Melanie, the language's friendly low-poly mascot.
+
 * [Text Processing Demonstration](text-processing/README.md):
   Demonstration of Motmot's text-processing library.
 * [Testing in Motmot](TestingInMotmot.ipynb): Illustration of
