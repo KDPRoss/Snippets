@@ -1,7 +1,7 @@
 #MotmotF
 
 ┌────────────────────────────────────────────────────┐
-│ Copyright 2020-2024 K.D.P.Ross <KDPRoss@gmail.com> │
+│ Copyright 2020-2025 K.D.P.Ross <KDPRoss@gmail.com> │
 │                                                    │
 │ This code is licensed only for study and personal  │
 │ enrichment.                                        │
@@ -70,7 +70,7 @@ where output-file                             = $[.].*$ =>r $.custom.md$ input-f
         -- Use the common processing but remove the title.
         processing
         +trees [
-          {[[Centre]] ---} ~ Fake!
+          { [[Centre]] --- } ~ Fake!
         ]
         -- Can't share the cache with `cached-processing`, since
         -- they're doing different things.

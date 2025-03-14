@@ -4,7 +4,7 @@
 │ An exploration of time-limited computation ... with │
 │ monads, naturally!                                  │
 │                                                     │
-│ Copyright 2024 K.D.P.Ross <KDPRoss@gmail.com>       │
+│ Copyright 2024-2025 K.D.P.Ross <KDPRoss@gmail.com>  │
 │                                                     │
 │ This code is licensed only for study and personal   │
 │ enrichment.                                         │
@@ -216,7 +216,7 @@ test-poly-time : () -> () = thunk (
   Testing.run-test-eq $fib-monadic-poly/time$ fib' [
     [ x |-> Just (fib x) | x : Num <- [ 0 .. 10 ] ]...,
     1000 |-> Nothing{ Num },
-    1m |-> Nothing{ Num },
+    1000000 |-> Nothing{ Num },
   ]
   where time-limit = 1
       | fib' : Num -> Maybe Num =

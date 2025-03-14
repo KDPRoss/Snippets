@@ -4,7 +4,7 @@
 │ Parser combinators in Motmot based on those from      │
 │ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
 │                                                       │
-│ Copyright 2020-2024 K.D.P.Ross <KDPRoss@gmail.com>    │
+│ Copyright 2020-2025 K.D.P.Ross <KDPRoss@gmail.com>    │
 │                                                       │
 │ This code is licensed only for study and personal     │
 │ enrichment.                                           │
@@ -47,8 +47,8 @@ fail-parse : result => Parse result =
 satisfy : (Letter -> Bool) -> Parse Letter =
   p : Letter -> Bool ~
     fun
-    ([{ Letter }]                             ~ [{ (Letter, Letters) }])
-    (((x : Letter) and {p}) :: (xs : Letters) ~ succeed x xs)
+    ([{ Letter }]                               ~ [{ (Letter, Letters) }])
+    (((x : Letter) and { p }) :: (xs : Letters) ~ succeed x xs)
     fail-parse{ Letter }
 
 literal : Letter -> Parse Letter =

@@ -1,13 +1,13 @@
 #MotmotF
 
-┌───────────────────────────────────────────────────┐
-│ Type classes in Motmot                            │
-│                                                   │
-│ Copyright 2024 K.D.P.Ross <KDPRoss@gmail.com>     │
-│                                                   │
-│ This code is licensed only for study and personal │
-│ enrichment.                                       │
-└───────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│ Type classes in Motmot                             │
+│                                                    │
+│ Copyright 2024-2025 K.D.P.Ross <KDPRoss@gmail.com> │
+│                                                    │
+│ This code is licensed only for study and personal  │
+│ enrichment.                                        │
+└────────────────────────────────────────────────────┘
 
 
 │ Unlike in Haskell, type classes are not a first-class
