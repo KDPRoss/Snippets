@@ -49,8 +49,7 @@ custom-processing : () -> () = thunk (
     -- containing the string `nunc`.
     filter-stream (
       lowercase >>
-      (_ ~=s $nunc$) >>
-      not
+      (_ ~/=s $nunc$)
     ) >> Processing.Text.paragraphs >>
     map-stream capitalise >>
     -- Apply the slightly-customised processing, respecting the
@@ -63,7 +62,8 @@ custom-processing : () -> () = thunk (
 )
 where output-file                             = $[.].*$ =>r $.custom.md$ input-file
     | render-settings : RenderMarkdownOptions = -- Take rendering defaults but increase wrapping column.
-                                                { Document.Rendering.Settings.Markdown.defaults...,
+                                                {
+                                                  Document.Rendering.Settings.Markdown.defaults...,
                                                   wrap-width ~ 80,
                                                 }
     | process-line : String -> String =

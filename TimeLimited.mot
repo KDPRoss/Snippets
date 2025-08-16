@@ -19,7 +19,7 @@
 
 -- ===== Straightforward Pure Implementation ===== --
 
--- Na:ive `fib` implementation: We want something that takes
+-- Naïve `fib` implementation: We want something that takes
 -- a noticeable amount of time to run. Nobody should
 -- *actually* implement this this way.
 fib : Num -> Num =
@@ -43,8 +43,8 @@ test-naive : () -> () = thunk (
 
 -- ===== Motivating Example ===== --
 
--- If we're sufficiently patient, we can generate Fibonacci
--- numbers ad infinitum.
+-- We can generate as many Fibonacci numbers as we have
+-- patience.
 fibs-forever : () -> () = thunk (
   { 1 .. } |>
     map-stream fib >>
@@ -260,7 +260,8 @@ map-stream-time-lim : (a, b) => (a -> Time b) -> Stream a -> Time (Stream b) =
 fibs-for-5-seconds : () -> () = thunk (
   seq (results : Maybe (Stream Num), sec : Num) = time (thunk (run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5))
     | _                                         = results ?? {{ Num }} |> ip-stream
-    | _                                         = print $in #{sd sec}sec$
+    | _                                         = -- Keep ourselves honest: This ought to show 5+ε.
+                                                  print $in #{sd sec}sec$
 )
 
 
