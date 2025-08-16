@@ -240,9 +240,24 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 
 -- ===== Examples ==== --
 
+parse-exn : String -> Expr =
+  explode >> wrap-parser-unique expn >> must
+
+failure : String -> Bool =
+  s : String ~
+    fail-for parse-exn and fail-for NativeParser.read-expn
+  where (fail-for : a => (String -> a) -> Bool) =
+          a =>
+            f : String -> a ~
+              try (let strict _ = f s in
+                   False -- Ought to have failed!
+                  )
+              recover _ : Tree ~ True
+
 │ These are the examples that Hutton shows in the
 │ ‘Computerphile’ video.
 
+ASSERT parse-exn s == NativeParser.read-expn s where s = $2+3*4$
 -- (ins) :s> read-eval-print $2+3*4$
 --  in: `read-eval-print $2+3*4$`
 -- out: `read-eval-print $2+3*4$`
@@ -252,6 +267,7 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- PRINT eval:   `14`.
 -- linearised: ()
 
+ASSERT parse-exn s == NativeParser.read-expn s where s = $(2+3)*4$
 -- (ins) :s> read-eval-print $(2+3)*4$
 --  in: `read-eval-print $(2+3)*4$`
 -- out: `read-eval-print $(2+3)*4$`
@@ -261,6 +277,7 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- PRINT eval:   `20`.
 -- linearised: ()
 
+ASSERT parse-exn s == NativeParser.read-expn s where s = $(2+(7*10)+8)*20$
 -- (ins) :s> read-eval-print $(2+(7*10)+8)*20$
 --  in: `read-eval-print $(2+(7*10)+8)*20$`
 -- out: `read-eval-print $(2+(7*10)+8)*20$`
@@ -270,6 +287,7 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- PRINT eval:   `1600`.
 -- linearised: ()
 
+ASSERT failure $2+3*$
 -- (ins) :s> read-eval-print $2+3*$
 --  in: `read-eval-print $2+3*$`
 -- out: `read-eval-print $2+3*$`
@@ -278,6 +296,7 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- PRINT PARSE FAILURE!
 -- linearised: ()
 
+ASSERT failure $(2+3$
 -- (ins) :s> read-eval-print $(2+3$
 --  in: `read-eval-print $(2+3$`
 -- out: `read-eval-print $(2+3$`
@@ -317,8 +336,13 @@ module NativeParser {
       delayed, txt,
     }
 | factor : Parser Expr =
-    number >>> Num
-    using Prelude.Parser{ >>> }
+    brackets ||| num
+    where (brackets : Parser Expr) = txt $($ ==> delayed expn <== txt $)$
+        | (num : Parser Expr)      = number >>> Num
+    using Prelude.Parser{
+      <==, ==>, >>>, |||,
+      delayed, txt,
+    }
 | number : Parser Num =
     rexp $[0-9]+$ >>> read{ Num }
     using Prelude.Parser{
