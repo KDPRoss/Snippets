@@ -99,14 +99,14 @@ run-identity : a => Identity a -> a =
 -- Gratuitously-monadic `fib` -- transitioning style but not
 -- functionality.
 fib-identity : Num -> Identity Num =
-    fun
-    (0 or 1  ~ return 1)
-    (n : Num ~ do m1 : Num = fib-identity (n - 2)
-                | m2 : Num = fib-identity (n - 1)
-                | return (m1 + m2)
-    )
-  where return = identity-instance.return
-      | >>=    = identity-instance.>>=
+  fun
+  (0 or 1  ~ return 1)
+  (n : Num ~ do m1 : Num = fib-identity (n - 2)
+              | m2 : Num = fib-identity (n - 1)
+              | return (m1 + m2)
+  )
+where return = identity-instance.return
+    | >>=    = identity-instance.>>=
 
 -- Henceforth, we can test by appealing to equivalence with
 -- our reference implementation.
@@ -233,26 +233,26 @@ map-stream-time-lim : (a, b) => (a -> Time b) -> Stream a -> Time (Stream b) =
   (a, b) =>
     f : a -> Time b ~
       loop {{ b }}
-  where loop : Stream b -> Stream a -> Time (Stream b) =
-          results : Stream b ~ xs : Stream a ~
-            Time (max-time : Num ~
-              case xs
-              ({{ a }}                 ~ -- No more work to do!
-                                         Just results
+    where loop : Stream b -> Stream a -> Time (Stream b) =
+            results : Stream b ~ xs : Stream a ~
+              Time (max-time : Num ~
+                case xs
+                ({{ a }}                 ~ -- No more work to do!
+                                           Just results
+                )
+                (x : a ::: xs : Stream a ~ let Time (f' : Num -> Maybe b) = f x
+                                           case f' max-time
+                                           (Nothing{ b } ~ -- Ran out of time trying to run `f x`; give up but retain
+                                                           -- what we've accomplished thus far.
+                                                           Just results
+                                           )
+                                           (Just (y : b) ~ -- Update results ... and carry on!
+                                                           let results'                                  = results ++_ ({ y })
+                                                             | Time (loop' : Num -> Maybe (Stream b)) = loop results' xs
+                                                           loop' max-time
+                                           )
+                )
               )
-              (x : a ::: xs : Stream a ~ let Time (f' : Num -> Maybe b) = f x
-                                         case f' max-time
-                                         (Nothing{ b } ~ -- Ran out of time trying to run `f x`; give up but retain
-                                                         -- what we've accomplished thus far.
-                                                         Just results
-                                         )
-                                         (Just (y : b) ~ -- Update results ... and carry on!
-                                                         let results'                                  = results ++_ ({ y })
-                                                           | Time (loop' : Num -> Maybe (Stream b)) = loop results' xs
-                                                         loop' max-time
-                                         )
-              )
-            )
 
 -- And, at last, we arrive at this: Compute some Fibonacci
 -- numbers ... How many? Well, as many as can be computed in

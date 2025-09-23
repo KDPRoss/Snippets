@@ -47,16 +47,16 @@ typedef Ord = a => {
   =< : a -> a -> Bool,
 }
 
-typedef Functor = (f : * -> *) => {
+typedef Functor = f : * -> * => {
   fmap : (a, b) => (a -> b) -> f a -> f b,
 }
 
 -- This will suffice for our demo.
-typedef Foldable = (t : * -> *) => {
+typedef Foldable = t : * -> * => {
   foldl : (a, b) => (a -> b -> a) -> a -> t b -> a,
 }
 
-typedef Monad = (m : * -> *) => {
+typedef Monad = m : * -> * => {
   return : a => a -> m a,
   >>= : (a, b) => m a -> (a -> m b) -> m b,
 }
@@ -162,8 +162,8 @@ use-sort-ord : () -> () = thunk (
 )
 
 -- Here's a container-polymorphic toy function.
-sum-squares : (f : * -> *) => Functor f -> Foldable f -> f Num -> Num =
-  (f : * -> *) =>
+sum-squares : f : * -> * => Functor f -> Foldable f -> f Num -> Num =
+  f : * -> * =>
     func : Functor f ~ fold : Foldable f ~ xs : f Num ~
       xs |>
         func.fmap (_ ^ 2) >>
@@ -181,12 +181,13 @@ use-sum-squares : () -> () = thunk (
 )
 
 -- Here's a monad-polymorphic toy function.
-funny : (m : * -> *) => Monad m -> m Num =
-  (m : * -> *) => m : Monad m ~ (
-    m.return 5 >>= n : Num ~
-    m.return (n ^ n)
-  )
-  where >>= = m.>>=
+funny : m : * -> * => Monad m -> m Num =
+  m : * -> * =>
+    m : Monad m ~ (
+      m.return 5 >>= n : Num ~
+      m.return (n ^ n)
+    )
+    where >>= = m.>>=
 
 │ [ 3125 ]
 │ <lazy-stream>
