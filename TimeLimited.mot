@@ -80,12 +80,12 @@ axiom Identity : a => a -> Identity a
 
 identity-instance : MonadInstance Identity =
   {r return, >>= }
-where return : a => a -> Identity a =
-        Identity
-    | >>= : (a, b) => Identity a -> (a -> Identity b) -> Identity b =
-        (a, b) =>
-          Identity (x : a) ~ f : a -> Identity b ~
-            f x
+  where return : a => a -> Identity a =
+          Identity
+      | >>= : (a, b) => Identity a -> (a -> Identity b) -> Identity b =
+          (a, b) =>
+            Identity (x : a) ~ f : a -> Identity b ~
+              f x
 
 run-identity : a => Identity a -> a =
   a =>
@@ -105,8 +105,8 @@ fib-identity : Num -> Identity Num =
               | m2 : Num = fib-identity (n - 1)
               | return (m1 + m2)
   )
-where return = identity-instance.return
-    | >>=    = identity-instance.>>=
+  where return = identity-instance.return
+      | >>=    = identity-instance.>>=
 
 -- Henceforth, we can test by appealing to equivalence with
 -- our reference implementation.
@@ -127,7 +127,7 @@ test-identity : () -> () = thunk (
 -- effect the monad is encoding. Unlike in Haskell, we'll
 -- need to pass the dictionary of evidence explicitly.
 fib-poly : (m : * -> *) => MonadInstance m -> Num -> m Num =
-  (m : * -> *) =>
+  m : * -> * =>
     m : MonadInstance m ~
       fun
       (0 or 1  ~ return 1)
@@ -138,8 +138,8 @@ fib-poly : (m : * -> *) => MonadInstance m -> Num -> m Num =
                   | m2 : Num = fib-poly m (n - 1)
                   | return (m1 + m2)
       )
-    where return = m.return
-        | >>=    = m.>>=
+      where return = m.return
+          | >>=    = m.>>=
 
 -- This will be equivalent to `fib-identity` when we
 -- instantiate it with `Identity` and the associated
@@ -165,32 +165,32 @@ axiom Time : a => (Num -> Maybe a) -> Time a
 
 time-instance : MonadInstance Time =
   {r return, >>= }
-where return : a => a -> Time a =
-        -- Always succeed. Note: That any pure operations are
-        -- expected to be 'trivially fast'.
-        a =>
-          x : a ~
-            Time (_ : Num ~
-              Just x
-            )
-    | >>= : (a, b) => Time a -> (a -> Time b) -> Time b =
-        (a, b) =>
-          Time (f : Num -> Maybe a) ~ g : a -> Time b ~
-            Time (max-time : Num ~
-              let strict t = now ()
-              if t >= max-time
-                 then -- We've exhausted our time budget; fail now.
-                      Nothing{ b }
-                 else case -- Evaluate the 'LHS' of the bind.
-                           f max-time
-                      (Nothing{ a } ~ -- If we've exhausted our time, stop.
-                                      Nothing{ b }
-                      )
-                      (Just (x : a) ~ -- Carry on, with the RHS feeding through the time limit.
-                                      let Time (g' : Num -> Maybe b) = g x
-                                      g' max-time
-                      )
-            )
+  where return : a => a -> Time a =
+          -- Always succeed. Note: That any pure operations are
+          -- expected to be 'trivially fast'.
+          a =>
+            x : a ~
+              Time (_ : Num ~
+                Just x
+              )
+      | >>= : (a, b) => Time a -> (a -> Time b) -> Time b =
+          (a, b) =>
+            Time (f : Num -> Maybe a) ~ g : a -> Time b ~
+              Time (max-time : Num ~
+                let strict t = now ()
+                if t >= max-time
+                   then -- We've exhausted our time budget; fail now.
+                        Nothing{ b }
+                   else case -- Evaluate the 'LHS' of the bind.
+                             f max-time
+                        (Nothing{ a } ~ -- If we've exhausted our time, stop.
+                                        Nothing{ b }
+                        )
+                        (Just (x : a) ~ -- Carry on, with the RHS feeding through the time limit.
+                                        let Time (g' : Num -> Maybe b) = g x
+                                        g' max-time
+                        )
+              )
 
 -- Current time in seconds since epoch, including
 -- decimalised partial seconds. Motmot doesn't have a native
@@ -233,32 +233,32 @@ map-stream-time-lim : (a, b) => (a -> Time b) -> Stream a -> Time (Stream b) =
   (a, b) =>
     f : a -> Time b ~
       loop {{ b }}
-    where loop : Stream b -> Stream a -> Time (Stream b) =
-            results : Stream b ~ xs : Stream a ~
-              Time (max-time : Num ~
-                case xs
-                ({{ a }}                 ~ -- No more work to do!
-                                           Just results
+      where loop : Stream b -> Stream a -> Time (Stream b) =
+              results : Stream b ~ xs : Stream a ~
+                Time (max-time : Num ~
+                  case xs
+                  ({{ a }}                 ~ -- No more work to do!
+                                             Just results
+                  )
+                  (x : a ::: xs : Stream a ~ let Time (f' : Num -> Maybe b) = f x
+                                             case f' max-time
+                                             (Nothing{ b } ~ -- Ran out of time trying to run `f x`; give up but retain
+                                                             -- what we've accomplished thus far.
+                                                             Just results
+                                             )
+                                             (Just (y : b) ~ -- Update results ... and carry on!
+                                                             let results'                               = {s results..., y }
+                                                               | Time (loop' : Num -> Maybe (Stream b)) = loop results' xs
+                                                             loop' max-time
+                                             )
+                  )
                 )
-                (x : a ::: xs : Stream a ~ let Time (f' : Num -> Maybe b) = f x
-                                           case f' max-time
-                                           (Nothing{ b } ~ -- Ran out of time trying to run `f x`; give up but retain
-                                                           -- what we've accomplished thus far.
-                                                           Just results
-                                           )
-                                           (Just (y : b) ~ -- Update results ... and carry on!
-                                                           let results'                                  = results ++_ ({ y })
-                                                             | Time (loop' : Num -> Maybe (Stream b)) = loop results' xs
-                                                           loop' max-time
-                                           )
-                )
-              )
 
 -- And, at last, we arrive at this: Compute some Fibonacci
 -- numbers ... How many? Well, as many as can be computed in
 -- at most 5 seconds (+/- a small factor).
 fibs-for-5-seconds : () -> () = thunk (
-  seq (results : Maybe (Stream Num), sec : Num) = time (thunk (run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5))
+  seq (results : Maybe (Stream Num), sec : Num) = time (() ~ run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5)
     | _                                         = results ?? {{ Num }} |> ip-stream
     | _                                         = -- Keep ourselves honest: This ought to show 5+ε.
                                                   print $in #{sd sec}sec$
