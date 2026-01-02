@@ -1,7 +1,7 @@
 #MotmotF
 
 ┌────────────────────────────────────────────────────┐
-│ Copyright 2020-2025 K.D.P.Ross <KDPRoss@gmail.com> │
+│ Copyright 2020-2026 K.D.P.Ross <KDPRoss@gmail.com> │
 │                                                    │
 │ This code is licensed only for study and personal  │
 │ enrichment.                                        │
@@ -41,24 +41,24 @@ cached-processing : () -> () = thunk (
 
 custom-processing : () -> () = thunk (
   input-file |>
-    read-file-progress-stream >>
+    System.read-file-progress-stream >>
     -- Preprocessing: Remove comments, do some arbitrary demo
     -- step, group in paragraphs.
     Processing.Text.strip-comments >>
     -- Somewhat arbitrarily, remove all source-file lines
     -- containing the string `nunc`.
-    filter-stream (
-      lowercase >>
+    Stream.filter (
+      String.lowercase >>
       (_ ~/=s $nunc$)
     ) >> Processing.Text.paragraphs >>
-    map-stream capitalise >>
+    Stream.map capitalise >>
     -- Apply the slightly-customised processing, respecting the
     -- TML-encoded document structure.
     Processing.Text.parse-and-process process-line >>
     -- Render back to text and apply minor postprocessing.
     (Document.Rendering.markdown render-settings).render-stream >>
     Document.Structure.compress-blanks-string >>
-    write-file-stream output-file
+    System.write-file-stream output-file
 )
 where output-file                             = $[.].*$ =>r $.custom.md$ input-file
     | render-settings : RenderMarkdownOptions = -- Take rendering defaults but increase wrapping column.
@@ -80,4 +80,4 @@ where output-file                             = $[.].*$ =>r $.custom.md$ input-f
         -- Ensure that the first word of each paragraph is
         -- capitalised.
         s : String ~
-          $#{s |> take-string 1 >> uppercase}#{drop-string 1 s}$
+          $#{s |> String.take 1 >> String.uppercase}#{String.drop 1 s}$

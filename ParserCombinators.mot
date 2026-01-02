@@ -4,7 +4,7 @@
 │ Parser combinators in Motmot based on those from      │
 │ ‘Higher-Order Functions for Parsing’ (G.Hutton, 1992) │
 │                                                       │
-│ Copyright 2020-2025 K.D.P.Ross <KDPRoss@gmail.com>    │
+│ Copyright 2020-2026 K.D.P.Ross <KDPRoss@gmail.com>    │
 │                                                       │
 │ This code is licensed only for study and personal     │
 │ enrichment.                                           │
@@ -42,7 +42,7 @@ succeed : result => result -> Parse result =
 
 fail-parse : result => Parse result =
   result =>
-    const{ Letters } [{ (result, Letters) }]
+    Function.const{ Letters } [{ (result, Letters) }]
 
 satisfy : (Letter -> Bool) -> Parse Letter =
   p : Letter -> Bool ~
@@ -76,10 +76,10 @@ mixfix 110 _ <=> _
   (a, b) =>
     p1 : Parse a ~ p2 : Parse b ~
       p1 >>
-      concat-map ((v1 : a, out1 : Letters) ~
+      List.concat-map ((v1 : a, out1 : Letters) ~
         out1 |>
           p2 >>
-          map ((v2 : b, out2 : Letters) ~
+          List.map ((v2 : b, out2 : Letters) ~
             ((v1, v2), out2)
           )
       )
@@ -96,36 +96,36 @@ mixfix 80 _ >>> _
   (a, b) =>
     p : Parse a ~ f : a -> b ~
       p >>
-      map (first{ Letters } f)
+      List.map (Function.first{ Letters } f)
 
 many : a => Parse a -> Parse [ a ] =
   a =>
     p : Parse a ~
-      (p <=> (inp : Letters ~ many p inp) >>> uncurry (::{ a })) || succeed [{ a }]
+      (p <=> (inp : Letters ~ many p inp) >>> Function.uncurry (::{ a })) || succeed [{ a }]
 
 some : a => Parse a -> Parse [ a ] =
   a =>
     p : Parse a ~
-      p <=> many p >>> uncurry (::{ a })
+      p <=> many p >>> Function.uncurry (::{ a })
 
 number : Parse String =
-  some (satisfy digit) >>> implode
+  some (satisfy digit) >>> String.implode
   where (digit : String -> Bool) =
           c : String ~
             $0$ =< c =< $9$
 
 word : Parse String =
-  some (satisfy letter) >>> implode
+  some (satisfy letter) >>> String.implode
   where (letter : String -> Bool) =
           c : String ~
-            $a$ =< lowercase c =< $z$
+            $a$ =< String.lowercase c =< $z$
 
 string : String -> Parse String =
-  explode >> (
+  String.explode >> (
     fix (core : [ String ] -> Parse String) ~
       fun
       ([{ String }]                      ~ succeed $$)
-      ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> uncurry (#))
+      ((x : String) :: (xs : [ String ]) ~ literal x <=> core xs >>> Function.uncurry (#))
   )
 
 mixfix 110 _ ==> _
@@ -133,21 +133,21 @@ mixfix 110 _ ==> _
 ==> : (a, b) => Parse a -> Parse b -> Parse b =
   (a, b) =>
     p1 : Parse a ~ p2 : Parse b ~
-      p1 <=> p2 >>> snd{ a, b }
+      p1 <=> p2 >>> Pair.snd{ a, b }
 
 mixfix 110 _ <== _
 
 <== : (a, b) => Parse a -> Parse b -> Parse a =
   (a, b) =>
     p1 : Parse a ~ p2 : Parse b ~
-      p1 <=> p2 >>> fst{ a, b }
+      p1 <=> p2 >>> Pair.fst{ a, b }
 
 mixfix 80 _ return _
 
 return : (a, b) => Parse a -> b -> Parse b =
   (a, b) =>
     p : Parse a ~ v : b ~
-      p >>> const{ a } v
+      p >>> Function.const{ a } v
 
 
 
@@ -187,11 +187,11 @@ factor : Parse Expr =
   (number >>> value) ||
     (inp : Letters ~ (literal $($ ==> expn <== literal $)$) inp)
 
-value : String -> Expr        = read{ Num } >> Num
-plus : (Expr, Expr) -> Expr   = uncurry Add
-minus : (Expr, Expr) -> Expr  = uncurry Sub
-times : (Expr, Expr) -> Expr  = uncurry Mul
-divide : (Expr, Expr) -> Expr = uncurry Div
+value : String -> Expr        = Serialise.read{ Num } >> Num
+plus : (Expr, Expr) -> Expr   = Function.uncurry Add
+minus : (Expr, Expr) -> Expr  = Function.uncurry Sub
+times : (Expr, Expr) -> Expr  = Function.uncurry Mul
+divide : (Expr, Expr) -> Expr = Function.uncurry Div
 
 
 -- ===== Evaluator ===== --
@@ -211,24 +211,24 @@ eval-expr : Expr -> Num =
 
 read-eval-print : String -> () =
   s : String ~
-    let strict _                = print $input:  `#{s}`.$
+    let strict _                = Serialise.print $input:  `#{s}`.$
              | (e : Maybe Expr) = s |>
-                                    explode >>
+                                    String.explode >>
                                     wrap-parser-unique expn in
     case e of
-    (Just (e : Expr) ~ let strict _ = print $parsed: `#{e}`.$ in
-                       print $eval:   `#{eval-expr e}`.$
+    (Just (e : Expr) ~ let strict _ = Serialise.print $parsed: `#{e}`.$ in
+                       Serialise.print $eval:   `#{eval-expr e}`.$
     )
-    (Nothing{ Expr } ~ print $PARSE FAILURE!$)
+    (Nothing{ Expr } ~ Serialise.print $PARSE FAILURE!$)
 
 wrap-parser : a => Parse a -> Letters -> [ a ] =
   a =>
     p : Parse a ~
       p >>
-      filter (
-        snd{ a, Letters } >>
+      List.filter (
+        Pair.snd{ a, Letters } >>
         ([{ Letter }] == _)
-      ) >> map fst{ a, Letters }
+      ) >> List.map Pair.fst{ a, Letters }
 
 wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
   a =>
@@ -241,7 +241,7 @@ wrap-parser-unique : a => Parse a -> Letters -> Maybe a =
 -- ===== Examples ==== --
 
 parse-exn : String -> Expr =
-  explode >> wrap-parser-unique expn >> must
+  String.explode >> wrap-parser-unique expn >> Maybe.must
 
 failure : String -> Bool =
   s : String ~
@@ -321,16 +321,16 @@ module NativeParser {
   using Prelude.Parser{ delayed, run }
 | expn : ParserLazy Expr =
     lazy-parse plus ||| minus ||| delayed term
-    where (plus : Parser Expr)  = delayed term <== txt $+$ <=> delayed expn >>> uncurry Add
-        | (minus : Parser Expr) = delayed term <== txt $-$ <=> delayed expn >>> uncurry Sub
+    where (plus : Parser Expr)  = delayed term <== txt $+$ <=> delayed expn >>> Function.uncurry Add
+        | (minus : Parser Expr) = delayed term <== txt $-$ <=> delayed expn >>> Function.uncurry Sub
   using Prelude.Parser{
     <==, <=>, >>>, |||,
     delayed, txt,
   }
 | term : ParserLazy Expr =
     lazy-parse times ||| divide ||| factor
-    where (times : Parser Expr)  = factor <== txt $*$ <=> delayed term >>> uncurry Mul
-        | (divide : Parser Expr) = factor <== txt $/$ <=> delayed term >>> uncurry Div
+    where (times : Parser Expr)  = factor <== txt $*$ <=> delayed term >>> Function.uncurry Mul
+        | (divide : Parser Expr) = factor <== txt $/$ <=> delayed term >>> Function.uncurry Div
   using Prelude.Parser{
     <==, <=>, >>>, |||,
     delayed, txt,
@@ -344,7 +344,7 @@ module NativeParser {
     delayed, txt,
   }
 | number : Parser Num =
-    rexp $[0-9]+$ >>> read{ Num }
+    rexp $[0-9]+$ >>> Serialise.read{ Num }
   using Prelude.Parser{
     >>>,
     rexp,

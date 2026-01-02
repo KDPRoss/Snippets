@@ -4,7 +4,7 @@
 │ An exploration of time-limited computation ... with │
 │ monads, naturally!                                  │
 │                                                     │
-│ Copyright 2024-2025 K.D.P.Ross <KDPRoss@gmail.com>  │
+│ Copyright 2024-2026 K.D.P.Ross <KDPRoss@gmail.com>  │
 │                                                     │
 │ This code is licensed only for study and personal   │
 │ enrichment.                                         │
@@ -47,8 +47,8 @@ test-naive : () -> () = thunk (
 -- patience.
 fibs-forever : () -> () = thunk (
   { 1 .. } |>
-    map-stream fib >>
-    ip-stream
+    Stream.map fib >>
+    Stream.ip
 )
 
 -- Pragmatically, however, we probably want to limit
@@ -57,9 +57,9 @@ fibs-forever : () -> () = thunk (
 -- like to compute.
 fibs-finite : () -> () = thunk (
   { 1 .. } |>
-    map-stream fib >>
-    take-stream 20 >>
-    ip-stream
+    Stream.map fib >>
+    Stream.take 20 >>
+    Stream.ip
 )
 
 -- But, what if we want to limit the amount of *time* that
@@ -197,9 +197,9 @@ time-instance : MonadInstance Time =
 -- way to do this, so we'll defer to GNU's `date` for this.
 now : () -> Num = thunk (
   $date +%s.%N$ |>
-    eval-result >>
-    head >>
-    read{ Num }
+    System.eval-result >>
+    List.head >>
+    Serialise.read{ Num }
 )
 
 -- Here, we'll accept a maximum *number of seconds* to run;
@@ -258,10 +258,10 @@ map-stream-time-lim : (a, b) => (a -> Time b) -> Stream a -> Time (Stream b) =
 -- numbers ... How many? Well, as many as can be computed in
 -- at most 5 seconds (+/- a small factor).
 fibs-for-5-seconds : () -> () = thunk (
-  seq (results : Maybe (Stream Num), sec : Num) = time (() ~ run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5)
-    | _                                         = results ?? {{ Num }} |> ip-stream
+  seq (results : Maybe (Stream Num), sec : Num) = Meta.time (() ~ run-time (map-stream-time-lim (fib-poly{ Time } time-instance) { 1 .. }) 5)
+    | _                                         = results ?? {{ Num }} |> Stream.ip
     | _                                         = -- Keep ourselves honest: This ought to show 5+ε.
-                                                  print $in #{sd sec}sec$
+                                                  Serialise.print $in #{Serialise.sd sec}sec$
 )
 
 

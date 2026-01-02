@@ -6,7 +6,7 @@
 │ Based upon ‘Infinite Data Structures’              │
 │ with Graham Hutton                                 │
 │                                                    │
-│ Copyright 2020-2025 K.D.P.Ross <KDPRoss@gmail.com> │
+│ Copyright 2020-2026 K.D.P.Ross <KDPRoss@gmail.com> │
 │                                                    │
 │ This code is licensed only for study and           │
 │ personal enrichment.                               │
@@ -50,9 +50,9 @@ sieve : Stream Num -> Stream Num =
 
 twin-primes : Stream (Num, Num) =
   primes |>
-    drop-stream 1 >>
-    zip-stream primes >>
-    filter-stream twin
+    Stream.drop 1 >>
+    Stream.zip primes >>
+    Stream.filter twin
   where twin : (Num, Num) -> Bool =
           (x : Num, y : Num) ~
             y == x + 2
